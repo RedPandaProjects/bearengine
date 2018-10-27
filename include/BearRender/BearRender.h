@@ -15,6 +15,6 @@ namespace BearEngine
 		static void Set(const BearVertexShader*vertex);
 		static void SetPS(const char*name,const BearTexture2D*texture);
 		static void SetVS(const char*name, const BearTexture2D*texture);
-		static void DrawMeshObject(BearMeshObject&mesh);
+		static void DrawMeshObject(BearMeshObject*mesh,BearMaterialInstance*material);
 	};
 }

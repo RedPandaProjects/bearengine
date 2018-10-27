@@ -29,22 +29,12 @@
 #include "BearMaterials/BearMaterialSpriteAlpha.h"
 
 #include "BearRender/BearRender.h"
-/*
-#include "BearResource/BearResourcesController.h"
 #include "BearRender/BearDevice.h"
-
-
-
-
-
-
-
-
 
 #include "Bear2D/BearSprite.h"
 
-#include "BearGame/BearObject.h"
-#include "BearGame/BearObjectType.h"
+/*
+#include "Bear2D/BearSprite.h"
 
 #include "BearGame/BearGameFactory.h"
 #include "BearGame/BearGameManager.h"

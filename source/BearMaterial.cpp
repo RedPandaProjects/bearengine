@@ -48,7 +48,7 @@ void BearEngine::BearMaterial::setValue(bsize id, void * data)
 		}
 		case ST_Texture:
 		{
-			BearRender::SetPS(item.name, reinterpret_cast<BearTexture2D*>(data));
+			BearRender::SetPS(item.name, *reinterpret_cast<BearTexture2D**>(data));
 
 		}break;
 		case ST_R:
@@ -83,7 +83,7 @@ void BearEngine::BearMaterial::setValue(bsize id, void * data)
 		} 	break;
 		case ST_Texture:
 		{
-			BearRender::SetVS(item.name, reinterpret_cast<BearTexture2D*>(data));
+			BearRender::SetVS(item.name, *reinterpret_cast<BearTexture2D**>(data));
 		}	break;
 		case ST_R:
 		{

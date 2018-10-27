@@ -7,6 +7,7 @@ namespace BearEngine
 		BEAR_CLASS_NO_COPY(BearMaterialInstance);
 		~BearMaterialInstance();
 		virtual void set();
+		virtual bool suportAlpha();
 	protected:
 		BearMaterialInstance(bsize id);
 		BearMaterial*material; 

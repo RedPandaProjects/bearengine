@@ -10,6 +10,7 @@ namespace BearEngine
 		BearCore::BearVector4<float> TextureUV;
 		BearTexture2D *Texture;
 		BearCore::BearMatrix Matrix;
+		virtual bool suportAlpha();
 	private:
 		BearMaterialSpriteAlpha();
 		virtual void set();

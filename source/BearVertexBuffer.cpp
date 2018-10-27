@@ -2,7 +2,8 @@
 
 BearEngine::BearVertexBuffer * BearEngine::BearVertexBuffer::Create()
 {
-	return BearCore::bear_new< BearVertexBuffer>();
+	auto type = BearCore::bear_alloc< BearVertexBuffer>(1);
+	return new(type)BearVertexBuffer();
 }
 
 BearEngine::BearVertexBuffer::~BearVertexBuffer()

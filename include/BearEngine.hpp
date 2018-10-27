@@ -28,9 +28,11 @@
 #include "BearMaterials/BearMaterialSprite.h"
 #include "BearMaterials/BearMaterialSpriteAlpha.h"
 
+#include "BearRender/BearRender.h"
+/*
 #include "BearResource/BearResourcesController.h"
 #include "BearRender/BearDevice.h"
-#include "BearRender/BearRender.h"
+
 
 
 
@@ -53,3 +55,4 @@
 #include "BearPhysics/BearPhysicsShape.h"
 #include "BearPhysics/BearPhysicsBody.h"
 
+*/

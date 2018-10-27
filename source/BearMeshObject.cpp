@@ -8,7 +8,8 @@ BearEngine::BearMeshObject::BearMeshObject()
 
 BearEngine::BearMeshObject * BearEngine::BearMeshObject::Create()
 {
-	return BearCore::bear_new<BearMeshObject>();
+	auto type = BearCore::bear_alloc< BearMeshObject>(1);
+	return new(type)BearMeshObject();
 }
 
 BearEngine::BearMeshObject::~BearMeshObject()

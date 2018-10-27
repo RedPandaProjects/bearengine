@@ -9,8 +9,8 @@ public class bear_engine :Executable
 		PCHIncludeFile = "BearEngine.hpp";
         Console = true;
 		AddSourceFiles(Path.Combine(ProjectPath,"source"));
-
-		Include.Public.Add(Path.Combine(ProjectPath,"include"));
+        Include.Private.Add(Path.Combine(ProjectPath, "include"));
+        Include.Public.Add(Path.Combine(ProjectPath,"include"));
 		Projects.Public.Add("bear_core");
         Projects.Private.Add("bear_graphics");
 		Projects.Private.Add("box2d");

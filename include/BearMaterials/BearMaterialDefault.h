@@ -7,8 +7,8 @@ namespace BearEngine
 	public:
 		static BearMaterialDefault*Create();
 		~BearMaterialDefault();
-		BearTexture2D Texture;
-		BearCore::BearMatrix *Matrix;
+		BearTexture2D *Texture;
+		BearCore::BearMatrix Matrix;
 	private:
 		BearMaterialDefault();
 		virtual void set();

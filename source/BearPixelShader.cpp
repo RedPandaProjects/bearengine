@@ -5,8 +5,8 @@ BearEngine::BearPixelShader * BearEngine::BearPixelShader::Create(const bchar * 
 	auto item = PixelShaderMap->find(BearCore::BearStringConteniar::BearStringConteniar(name, false));
 	if (item == PixelShaderMap->end())
 	{
-
-		BearPixelShader* result = BearCore::bear_new<BearPixelShader>(name);
+		auto result = BearCore::bear_alloc< BearPixelShader>(1);
+		new(result)BearPixelShader(name);
 		BearMultiResource<BearPixelShader> obj;
 		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
 		BearCore::BearString::Copy(result->get_name(), 64, name);
@@ -17,7 +17,7 @@ BearEngine::BearPixelShader * BearEngine::BearPixelShader::Create(const bchar * 
 	else
 	{
 		item->second++;
-		return   *item->second.get();
+		return   item->second.get();
 	}
 }
 
@@ -33,7 +33,6 @@ static const bchar*ShaderPath = TEXT("..\\..\\content\\stalker2d\\shaders\\dx11\
 
 BearEngine::BearPixelShader::BearPixelShader(const bchar * name)
 {
-	BearCore::BearStringPath temp1;
 	BearCore::BearStringPath temp1;
 
 	BearCore::BearString::Copy(temp1, ShaderPath);

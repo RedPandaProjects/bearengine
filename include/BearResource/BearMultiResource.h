@@ -12,11 +12,15 @@ namespace BearEngine
 		{
 			return !*m_data;
 		}
-		inline P*&get()
+		inline C*get()
 		{
 			return *m_data;
 		}
-		inline const P*get()const
+		inline void set(C* data)
+		{
+			m_data = data;
+		}
+		inline const C*get()const
 		{
 			return *m_data;
 		}

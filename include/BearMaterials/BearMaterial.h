@@ -21,7 +21,7 @@ namespace BearEngine
 		};
 		static BearMaterial*Create(const bchar*px, const bchar*vs);
 		~BearMaterial();
-		void appendValue(const bchar*name,Shader shader,ShaderType shader_type,bsize id);
+		void appendValue(const char*name,Shader shader,ShaderType shader_type,bsize id);
 		void set();
 		template<class C>
 		inline void setValue(bsize id,const C&value)
@@ -35,12 +35,13 @@ namespace BearEngine
 		void setValue(bsize id,void*data);
 		struct Value
 		{
-			bsize id;
+
 			Shader shader;
 			ShaderType shader_type;
 			char name[64];
 		};
 		BearCore::BearMap<bsize,Value> m_textures;
-
+		BearVertexShader*m_vertex_shader;
+		BearPixelShader *m_pixel_shader;
 	};
 };

@@ -10,7 +10,8 @@ BearEngine::BearTexture2D * BearEngine::BearTexture2D::Create(const bchar * name
 	if (item == TextureMap->end())
 	{
 	
-		BearTexture2D* result = BearCore::bear_new<BearTexture2D>(name);
+		auto result = BearCore::bear_alloc< BearTexture2D>(1);
+		new(result)BearTexture2D(name);
 		BearMultiResource<BearTexture2D> obj;
 		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
 		BearCore::BearString::Copy(result->get_name(), 64, name);
@@ -20,9 +21,8 @@ BearEngine::BearTexture2D * BearEngine::BearTexture2D::Create(const bchar * name
 	}
 	else
 	{
-		BearTexture2D* result;
 		item->second++;
-		return   *item->second.get();
+		return   item->second.get();
 	}
 }
 

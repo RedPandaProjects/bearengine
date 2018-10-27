@@ -6,7 +6,8 @@ BearEngine::BearVertexShader * BearEngine::BearVertexShader::Create(const bchar 
 	if (item == VertexShaderMap->end())
 	{
 
-		BearVertexShader* result = BearCore::bear_new<BearVertexShader>(name);
+		auto result = BearCore::bear_alloc< BearVertexShader>(1);
+		new(result)BearVertexShader(name);
 		BearMultiResource<BearVertexShader> obj;
 		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
 		BearCore::BearString::Copy(result->get_name(), 64, name);
@@ -17,7 +18,7 @@ BearEngine::BearVertexShader * BearEngine::BearVertexShader::Create(const bchar 
 	else
 	{
 		item->second++;
-		return   *item->second.get();
+		return   item->second.get();
 	}
 }
 
@@ -33,7 +34,6 @@ static const bchar*ShaderPath = TEXT("..\\..\\content\\stalker2d\\shaders\\dx11\
 
 BearEngine::BearVertexShader::BearVertexShader(const bchar * name)
 {
-	BearCore::BearStringPath temp1;
 	BearCore::BearStringPath temp1;
 
 	BearCore::BearString::Copy(temp1, ShaderPath);

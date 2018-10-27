@@ -2,7 +2,8 @@
 
 BearEngine::BearIndexBuffer * BearEngine::BearIndexBuffer::Create()
 {
-	return BearCore::bear_new< BearIndexBuffer>();
+	auto type= BearCore::bear_alloc< BearIndexBuffer>(1);
+	return new(type)BearIndexBuffer();
 }
 
 BearEngine::BearIndexBuffer::~BearIndexBuffer()

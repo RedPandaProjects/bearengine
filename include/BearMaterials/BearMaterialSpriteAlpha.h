@@ -6,12 +6,12 @@ namespace BearEngine
 		BEAR_CLASS_NO_COPY(BearMaterialSpriteAlpha);
 	public:
 		static BearMaterialSpriteAlpha*Create();
-		~BearMaterialSpriteAlpha();
 		BearCore::BearVector4<float> TextureUV;
 		BearTexture2D *Texture;
-		BearCore::BearMatrix Matrix;
 		virtual bool suportAlpha();
+		virtual void destroy();
 	private:
+		~BearMaterialSpriteAlpha();
 		BearMaterialSpriteAlpha();
 		virtual void set();
 

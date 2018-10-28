@@ -6,9 +6,17 @@ BearEngine::BearIndexBuffer * BearEngine::BearIndexBuffer::Create()
 	return new(type)BearIndexBuffer();
 }
 
-BearEngine::BearIndexBuffer::~BearIndexBuffer()
+void BearEngine::BearIndexBuffer::destroy()
 {
 	BearCore::bear_delete(get<BearGraphics::BearIndexBufferRef>());
+	get<BearGraphics::BearIndexBufferRef>() = 0;
+	this->~BearIndexBuffer();
+	BearCore::bear_free(this);
+}
+
+BearEngine::BearIndexBuffer::~BearIndexBuffer()
+{
+
 }
 
 BearEngine::BearIndexBuffer::BearIndexBuffer()

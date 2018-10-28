@@ -97,9 +97,13 @@ void BearEngine::BearRender::Swap()
 void BearEngine::BearRender::Destory()
 {
 	ViewPort.close();
-	BearCore::bear_delete(Rect2DMesh);
+	Rect2DMesh->destroy();
 	SamplerDefault.clear();
 	VertexInputLayoutDefault.clear();
+	DepthStencilView.clear();
+	DepthStencilState.clear();
+	BlendState.clear();
+	BlendStateAlpha.clear();
 }
 
 void BearEngine::BearRender::AlphaOn()
@@ -134,7 +138,7 @@ void BearEngine::BearRender::DrawMeshObject(BearMeshObject * mesh, BearMaterialI
 {
 	
 	BearGraphics::BearRenderInterface::SetIndexBuffer(*mesh->getIndexBuffer()->get<BearGraphics::BearIndexBufferRef>());
-	BearGraphics::BearRenderInterface::SetVertexBuffer(*mesh->getVertexBuffer()->get<BearGraphics::BearVertexBufferRef>(),BearVertex::getSize());
+	BearGraphics::BearRenderInterface::SetVertexBuffer(*mesh->getVertexBuffer()->get<BearGraphics::BearVertexBufferRef>(),static_cast<uint32>(BearVertex::getSize()));
 	material->set();
 	if (material->suportAlpha())AlphaOn();
 	BearGraphics::BearRenderInterface::Draw(mesh->getSizeIndex());

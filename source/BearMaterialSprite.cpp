@@ -8,7 +8,13 @@ BearEngine::BearMaterialSprite * BearEngine::BearMaterialSprite::Create()
 
 BearEngine::BearMaterialSprite::~BearMaterialSprite()
 {
-	BearCore::bear_delete(Texture);
+
+}
+void BearEngine::BearMaterialSprite::destroy()
+{
+	Texture->destroy();
+	this->~BearMaterialSprite();
+	BearCore::bear_free(this);
 }
 BearEngine::BearMaterialSprite::BearMaterialSprite() :BearMaterialInstance(BearMaterialController::MT_Sprite)
 {

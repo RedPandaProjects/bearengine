@@ -7,7 +7,7 @@ namespace BearEngine
 	public:
 		BearResourceWithName() : m_data(0) { m_name[0] = 0; }
 		
-		inline ~BearResourceWithName() { BEAR_ASSERT(m_data==0); }
+		inline ~BearResourceWithName() {  }
 
 		inline bchar*get_name()
 		{

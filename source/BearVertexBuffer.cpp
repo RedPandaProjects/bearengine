@@ -6,9 +6,17 @@ BearEngine::BearVertexBuffer * BearEngine::BearVertexBuffer::Create()
 	return new(type)BearVertexBuffer();
 }
 
-BearEngine::BearVertexBuffer::~BearVertexBuffer()
+void BearEngine::BearVertexBuffer::destroy()
 {
 	BearCore::bear_delete(get<BearGraphics::BearVertexBufferRef>());
+	get<BearGraphics::BearVertexBufferRef>() = 0;
+	this->~BearVertexBuffer();
+	BearCore::bear_free(this);
+}
+
+BearEngine::BearVertexBuffer::~BearVertexBuffer()
+{
+
 }
 
 BearEngine::BearVertexBuffer::BearVertexBuffer()

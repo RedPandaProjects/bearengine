@@ -6,11 +6,11 @@ namespace BearEngine
 		BEAR_CLASS_NO_COPY(BearMaterialSprite);
 	public:
 		static BearMaterialSprite*Create();
-		~BearMaterialSprite();
 		BearCore::BearVector4<float> TextureUV;
 		BearTexture2D *Texture;
-		BearCore::BearMatrix Matrix;
+		virtual void destroy();
 	private:
+		~BearMaterialSprite();
 		BearMaterialSprite();
 		virtual void set();
 		

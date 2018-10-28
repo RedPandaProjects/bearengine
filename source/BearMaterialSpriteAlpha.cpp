@@ -8,7 +8,7 @@ BearEngine::BearMaterialSpriteAlpha * BearEngine::BearMaterialSpriteAlpha::Creat
 
 BearEngine::BearMaterialSpriteAlpha::~BearMaterialSpriteAlpha()
 {
-	BearCore::bear_delete(Texture);
+
 }
 BearEngine::BearMaterialSpriteAlpha::BearMaterialSpriteAlpha() :BearMaterialInstance(BearMaterialController::MT_Sprite)
 {
@@ -17,6 +17,12 @@ BearEngine::BearMaterialSpriteAlpha::BearMaterialSpriteAlpha() :BearMaterialInst
 bool BearEngine::BearMaterialSpriteAlpha::suportAlpha()
 {
 	return true;
+}
+void BearEngine::BearMaterialSpriteAlpha::destroy()
+{
+	Texture->destroy();
+	this->~BearMaterialSpriteAlpha();
+	BearCore::bear_free(this);
 }
 void BearEngine::BearMaterialSpriteAlpha::set()
 {

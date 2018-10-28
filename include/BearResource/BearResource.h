@@ -1,12 +1,12 @@
 #pragma once
 namespace BearEngine
 {
-	class BearResource
+	class BEARENGINE_API BearResource
 	{
 	BEAR_CLASS_NO_COPY(BearResource);
 	public:
 		BearResource():m_data(0){}
-		inline ~BearResource() { BEAR_ASSERT(m_data==0); }
+		inline ~BearResource() {  }
 
 		inline bool empty() const
 		{

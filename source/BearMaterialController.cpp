@@ -3,11 +3,11 @@ static BearCore::BearMap<bsize,BearCore::BearMemoryRef< BearEngine::BearMaterial
 void BearEngine::BearMaterialController::Initialize()
 {
 	VertexShaderMap = BearCore::bear_new< BearCore::BearMap<bsize, BearCore::BearMemoryRef< BearMaterial>>>();
-	BearMaterial *defualt = BearMaterial::Create(TEXT("defualt"), TEXT("default"));
-	defualt->appendValue("matrix", BearMaterial::S_Vertex, BearMaterial::ST_Matrix, 0);
-	defualt->appendValue("texture", BearMaterial::S_Pixel, BearMaterial::ST_Texture, 1);
-	SetMaterial(defualt, MT_Default);
-	BearMaterial *sprite = BearMaterial::Create(TEXT("defualt"), TEXT("sprite"));
+	BearMaterial *default = BearMaterial::Create(TEXT("default"), TEXT("default"));
+	default->appendValue("matrix", BearMaterial::S_Vertex, BearMaterial::ST_Matrix, 0);
+	default->appendValue("texture", BearMaterial::S_Pixel, BearMaterial::ST_Texture, 1);
+	SetMaterial(default, MT_Default);
+	BearMaterial *sprite = BearMaterial::Create(TEXT("default"), TEXT("sprite"));
 	sprite->appendValue("matrix", BearMaterial::S_Vertex, BearMaterial::ST_Matrix, 0);
 	sprite->appendValue("texture", BearMaterial::S_Pixel, BearMaterial::ST_Texture, 1);
 	sprite->appendValue("texture_uv", BearMaterial::S_Vertex, BearMaterial::ST_RGBA, 2);

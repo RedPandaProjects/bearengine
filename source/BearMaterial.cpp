@@ -8,8 +8,8 @@ BearEngine::BearMaterial * BearEngine::BearMaterial::Create(const bchar * px, co
 
 BearEngine::BearMaterial::~BearMaterial()
 {
-	BearCore::bear_delete(m_pixel_shader);
-	BearCore::bear_delete(m_vertex_shader);
+	m_pixel_shader->destroy();
+	m_vertex_shader->destroy();
 }
 
 void BearEngine::BearMaterial::appendValue(const char * name, Shader shader, ShaderType shader_type, bsize id)

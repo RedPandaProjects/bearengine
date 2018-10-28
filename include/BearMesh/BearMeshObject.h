@@ -14,8 +14,8 @@ namespace BearEngine
 	public:
 
 		static BearMeshObject*Create();
-		~BearMeshObject();
-
+		
+		void destroy();
 		inline BearCore::BearVector<BearVertex> & getVertexArray()
 		{
 			clearVertexBuffer();
@@ -34,6 +34,7 @@ namespace BearEngine
 		BearIndexBuffer* getIndexBuffer();
 	private:
 		BearMeshObject();
+		~BearMeshObject();
 		void clearVertexBuffer();
 		void clearIndexBuffer();
 		BearCore::BearVector<BearVertex> m_vertex_array;

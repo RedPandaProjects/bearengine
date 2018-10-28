@@ -6,8 +6,9 @@ namespace BearEngine
 	public:
 		BEAR_CLASS_NO_COPY(BearIndexBuffer);
 		static BearIndexBuffer* Create();
-		~BearIndexBuffer();
+		void destroy();
 	private:
+		~BearIndexBuffer();
 		BearIndexBuffer();
 	};
 }

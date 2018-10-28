@@ -9,8 +9,7 @@ BearEngine::BearVertexShader * BearEngine::BearVertexShader::Create(const bchar 
 		auto result = BearCore::bear_alloc< BearVertexShader>(1);
 		new(result)BearVertexShader(name);
 		BearMultiResource<BearVertexShader> obj;
-		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
-		BearCore::BearString::Copy(result->get_name(), 64, name);
+		obj.set( result);
 		BearCore::BearString::Copy(obj.get()->get_name(), 64, name);
 		VertexShaderMap->insert(name, obj);
 		return result;
@@ -22,15 +21,28 @@ BearEngine::BearVertexShader * BearEngine::BearVertexShader::Create(const bchar 
 	}
 }
 
-BearEngine::BearVertexShader::~BearVertexShader()
+void BearEngine::BearVertexShader::destroy()
 {
+	if (get<BearGraphics::BearVertexShaderRef>() == 0)return;
 	auto item = VertexShaderMap->find(BearCore::BearStringConteniar::BearStringConteniar(get_name(), false));
 	BEAR_ASSERT(item != VertexShaderMap->end());
 	item->second--;
 	if (item->second.empty())
+	{
+		BearCore::bear_delete(get<BearGraphics::BearVertexShaderRef>());
+		get<BearGraphics::BearVertexShaderRef>() = 0;
 		VertexShaderMap->erase(item);
+		this->~BearVertexShader();
+		BearCore::bear_free(this);
+	}
+	
 }
+
 static const bchar*ShaderPath = TEXT("..\\..\\content\\stalker2d\\shaders\\dx11\\");
+
+BearEngine::BearVertexShader::~BearVertexShader()
+{
+}
 
 BearEngine::BearVertexShader::BearVertexShader(const bchar * name)
 {

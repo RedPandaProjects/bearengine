@@ -8,7 +8,14 @@ BearEngine::BearMaterialDefault * BearEngine::BearMaterialDefault::Create()
 
 BearEngine::BearMaterialDefault::~BearMaterialDefault()
 {
-	BearCore::bear_delete(Texture);
+
+}
+
+void BearEngine::BearMaterialDefault::destroy()
+{
+	Texture->destroy();
+	this->~BearMaterialDefault();
+	BearCore::bear_free(this);
 }
 
 BearEngine::BearMaterialDefault::BearMaterialDefault():BearMaterialInstance(BearMaterialController::MT_Default)

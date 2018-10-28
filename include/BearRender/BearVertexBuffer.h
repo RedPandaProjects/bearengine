@@ -6,8 +6,9 @@ namespace BearEngine
 	public:
 		BEAR_CLASS_NO_COPY(BearVertexBuffer);
 		static BearVertexBuffer* Create();
-		~BearVertexBuffer();
+		void destroy();
 	private:
+		~BearVertexBuffer();
 		BearVertexBuffer();
 	};
 }

@@ -11,6 +11,8 @@
 #include "BearResource/BearMultiResource.h"
 #include "BearGame/BearObject.h"
 
+#include "BearGame/BearObjectType.h"
+
 #include "BearResource/BearResourcesController.h"
 
 #include "BearRender/BearTexture2D.h"
@@ -33,13 +35,20 @@
 
 #include "Bear2D/BearSprite.h"
 
-/*
-#include "Bear2D/BearSprite.h"
+#include "BearPhysics/BearPhysicsWorld.h"
+#include "BearPhysics/BearPhysicsCollider.h"
+
+#include "BearLevel/BearLevel.h"
 
 #include "BearGame/BearGameFactory.h"
 #include "BearGame/BearGameManager.h"
+/*
+#include "Bear2D/BearSprite.h"
 
-#include "BearLevel/BearLevel.h"
+
+
+
+
 
 #include "BearPhysics/BearPhysicsWorld.h"
 #include "BearPhysics/BearPhysicsShape.h"

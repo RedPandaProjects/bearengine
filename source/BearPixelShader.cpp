@@ -8,8 +8,7 @@ BearEngine::BearPixelShader * BearEngine::BearPixelShader::Create(const bchar * 
 		auto result = BearCore::bear_alloc< BearPixelShader>(1);
 		new(result)BearPixelShader(name);
 		BearMultiResource<BearPixelShader> obj;
-		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
-		BearCore::BearString::Copy(result->get_name(), 64, name);
+		obj.set(result);
 		BearCore::BearString::Copy(obj.get()->get_name(), 64, name);
 		PixelShaderMap->insert(name, obj);
 		return result;
@@ -21,13 +20,26 @@ BearEngine::BearPixelShader * BearEngine::BearPixelShader::Create(const bchar * 
 	}
 }
 
-BearEngine::BearPixelShader::~BearPixelShader()
+void BearEngine::BearPixelShader::destroy()
 {
+	if (get<BearGraphics::BearPixelShaderRef>() == 0)return;
 	auto item = PixelShaderMap->find(BearCore::BearStringConteniar::BearStringConteniar(get_name(), false));
 	BEAR_ASSERT(item != PixelShaderMap->end());
 	item->second--;
 	if (item->second.empty())
+	{
+		BearCore::bear_delete(get<BearGraphics::BearPixelShaderRef>());
+		get<BearGraphics::BearPixelShaderRef>() = 0;
 		PixelShaderMap->erase(item);
+		this->~BearPixelShader();
+		BearCore::bear_free(this);
+	}
+	
+}
+
+BearEngine::BearPixelShader::~BearPixelShader()
+{
+
 }
 static const bchar*ShaderPath = TEXT("..\\..\\content\\stalker2d\\shaders\\dx11\\");
 

@@ -12,10 +12,17 @@ BearEngine::BearMeshObject * BearEngine::BearMeshObject::Create()
 	return new(type)BearMeshObject();
 }
 
+void BearEngine::BearMeshObject::destroy()
+{
+	m_vertex_buffer->destroy();
+	m_index_buffer->destroy();
+	this->~BearMeshObject();
+	BearCore::bear_free(this);
+}
+
 BearEngine::BearMeshObject::~BearMeshObject()
 {
-	BearCore::bear_delete(m_vertex_buffer);
-	BearCore::bear_delete(m_index_buffer);
+
 }
 
 

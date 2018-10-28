@@ -15,6 +15,12 @@ bool BearEngine::BearMaterialInstance::suportAlpha()
 	return false;
 }
 
+void BearEngine::BearMaterialInstance::destroy()
+{
+	this->~BearMaterialInstance();
+	BearCore::bear_free(this);
+}
+
 BearEngine::BearMaterialInstance::BearMaterialInstance(bsize id)
 {
 	material = BearMaterialController::GetMaterial(id);

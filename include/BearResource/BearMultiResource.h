@@ -5,16 +5,16 @@ namespace BearEngine
 	struct BearMultiResource
 	{
 	public:
-		BearMultiResource():m_count(1){}
-		inline ~BearMultiResource() { BEAR_ASSERT(*m_data&&m_count); m_data.clear(); }
+		BearMultiResource():m_count(1),m_data(0){}
+		inline ~BearMultiResource() {}
 
 		inline bool empty() const
 		{
-			return !*m_data;
+			return !m_count;
 		}
 		inline C*get()
 		{
-			return *m_data;
+			return m_data;
 		}
 		inline void set(C* data)
 		{
@@ -22,7 +22,7 @@ namespace BearEngine
 		}
 		inline const C*get()const
 		{
-			return *m_data;
+			return m_data;
 		}
 		inline void operator++(int)
 		{
@@ -33,11 +33,11 @@ namespace BearEngine
 			m_count--;
 			if(m_count==0)
 			{
-				m_data.clear();
+				m_data = 0;
 			}
 		}
 	private:
 		bsize m_count;
-		BearCore::BearMemoryRef<C> m_data;
+		C * m_data;
 	};
 }

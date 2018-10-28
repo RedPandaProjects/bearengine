@@ -6,8 +6,9 @@ namespace BearEngine
 	public:
 		BEAR_CLASS_NO_COPY(BearPixelShader);
 		static BearPixelShader* Create(const bchar*name);
-		~BearPixelShader();
+		void destroy();
 	private:
+		~BearPixelShader();
 		BearPixelShader(const bchar*name);
 	};
 }

@@ -5,11 +5,9 @@ namespace BearEngine
 	{
 		BEAR_CLASS_NO_COPY(BearSprite);
 	public:
-		BearSprite();
-		~BearSprite();
-		void setTexture(const bchar*texture, bool alpha = false);
+		static BearSprite*Create(const bchar*texture, bool alpha = false);
+		void destroy();
 		void draw();
-		void clear();
 		inline BearCore::BearVector2<float> &getPosition()
 		{
 			m_update=true;
@@ -17,7 +15,6 @@ namespace BearEngine
 		}
 		inline BearCore::BearVector2<float> getPosition()const
 		{
-			
 			return m_position;
 		}
 		inline BearCore::BearVector4<float> &getUV()
@@ -49,12 +46,14 @@ namespace BearEngine
 		}
 
 	private:
-		void updateMatrix();
+		~BearSprite();
+		BearSprite(const bchar*texture, bool alpha = false);
+		void update();
 		bool m_update;
 		BearCore::BearVector2<float>  m_position;
 		BearCore::BearVector2<float>  m_size;
 		BearCore::BearVector4<float>  m_texture_uv;
 		float m_rotation;
-		BearMaterial *m_material;
+		BearMaterialInstance *m_material;
 	};
 }

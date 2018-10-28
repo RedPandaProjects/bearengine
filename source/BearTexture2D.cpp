@@ -13,8 +13,7 @@ BearEngine::BearTexture2D * BearEngine::BearTexture2D::Create(const bchar * name
 		auto result = BearCore::bear_alloc< BearTexture2D>(1);
 		new(result)BearTexture2D(name);
 		BearMultiResource<BearTexture2D> obj;
-		obj.get()->get < BearGraphics::BearTexture2DRef>() = result->get < BearGraphics::BearTexture2DRef>();;
-		BearCore::BearString::Copy(result->get_name(), 64, name);
+		obj.set(result);
 		BearCore::BearString::Copy(obj.get()->get_name(), 64, name);
 		TextureMap->insert(name, obj);
 		return result;
@@ -26,13 +25,26 @@ BearEngine::BearTexture2D * BearEngine::BearTexture2D::Create(const bchar * name
 	}
 }
 
-BearEngine::BearTexture2D::~BearTexture2D()
+void BearEngine::BearTexture2D::destroy()
 {
+	if (get<BearGraphics::BearTexture2DRef>() == 0)return;
+
 	auto item = TextureMap->find(BearCore::BearStringConteniar::BearStringConteniar(get_name(), false));
 	BEAR_ASSERT(item != TextureMap->end());
 	item->second--;
-	if(item->second.empty())
-	TextureMap->erase(item);
+	if (item->second.empty())
+	{
+		BearCore::bear_delete(get<BearGraphics::BearTexture2DRef>());
+		get<BearGraphics::BearTexture2DRef>() = 0;
+		TextureMap->erase(item);
+		this->~BearTexture2D();
+		BearCore::bear_free(this);
+	}
+}
+
+BearEngine::BearTexture2D::~BearTexture2D()
+{
+	
 }
 
 BearCore::BearVector2<float> BearEngine::BearTexture2D::getSize() const

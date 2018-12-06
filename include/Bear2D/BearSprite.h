@@ -1,59 +1,38 @@
 #pragma once
 namespace BearEngine
 {
-	class BEARENGINE_API BearSprite
+	class BEARENGINE_API BearSprite :public BearObject
 	{
-		BEAR_CLASS_NO_COPY(BearSprite);
-	public:
-		static BearSprite*Create(const bchar*texture, bool alpha = false);
-		void destroy();
-		void draw();
-		inline BearCore::BearVector2<float> &getPosition()
-		{
-			m_update=true;
-			return m_position;
-		}
-		inline BearCore::BearVector2<float> getPosition()const
-		{
-			return m_position;
-		}
-		inline BearCore::BearVector4<float> &getUV()
-		{
-			m_update=true;
-			return m_texture_uv;
-		}
-		inline BearCore::BearVector4<float> getUV()const
-		{
-			return m_texture_uv;
-		}
-		inline BearCore::BearVector2<float>& getSize()
-		{
-			m_update=true;
-			return m_size;
-		}	
-		inline BearCore::BearVector2<float> getSize()const
-		{
-			return m_size;
-		}
-		inline float&getRotation()
-		{
-			m_update=true;
-			return m_rotation;
-		}		
-		inline float getRotation()const
-		{
-			return m_rotation;
-		}
-
-	private:
+		BEAR_OBJECT(BearSprite);
+		BearSprite(const BearName&type);
 		~BearSprite();
-		BearSprite(const bchar*texture, bool alpha = false);
-		void update();
-		bool m_update;
-		BearCore::BearVector2<float>  m_position;
-		BearCore::BearVector2<float>  m_size;
-		BearCore::BearVector4<float>  m_texture_uv;
-		float m_rotation;
-		BearMaterialInstance *m_material;
+	public:
+		union
+		{	
+			BearCore::BearVector4<float> Rect;
+			struct
+			{
+				BearCore::BearVector2<float> Position;
+				BearCore::BearVector2<float> Size;
+			};
+		};
+		BearCore::BearVector2<float> Center;
+		float Rotation;
+		BearCore::BearVector4<float> TextureUV;
+		void SetTexutre(const BearName&name);
+		virtual void Destroy();
+		virtual void Update(float time);
+		inline void SetMatrix(BearRender::TypeMatrix matrix)
+		{
+			m_type_matrix = matrix;
+		}
+	private:
+		virtual void Save(BearCore::BearOutputStream*stream) override;
+		virtual void Load(const BearCore::BearInputStream*stream)override;
+		BearShader m_shader;
+		BearSampler m_sampler;
+		BearVertex m_vectex[4];
+		BearCore::BearMatrix m_matrix;
+		BearRender::TypeMatrix m_type_matrix;
 	};
 }

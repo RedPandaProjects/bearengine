@@ -1,19 +1,27 @@
 #include "BearEngine.hpp"
 
  BearCore::BearWindow Window;
- BearCore::BearMatrix Othro;
+
+ extern bool bEditor;
 
 void BearEngine::BearDevice::Initialize()
 {
+	if(!bEditor)
 	Window.create(TEXT("test"), 1024, 768, false);
 	BEAR_ASSERT(BearGraphics::BearRenderInterface::Initialize(TEXT("bear_dx11")));
-	Othro.buildOrthoOffCenter(1024, 768, FLT_MIN, 100.f);
+
+
 }
 
 void BearEngine::BearDevice::Destory()
 {
 	BearGraphics::BearRenderInterface::Destroy();
 	Window.close();
+}
+
+const bchar * BearEngine::BearDevice::GetNameGraphics()
+{
+	return TEXT("dx11");
 }
 
 bool BearEngine::BearDevice::Update()

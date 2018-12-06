@@ -1,28 +1,26 @@
 #pragma once
 namespace BearEngine
 {
-	class BEARENGINE_API BearResource
+	template<class C>
+	class BearResource
 	{
-	BEAR_CLASS_NO_COPY(BearResource);
+		friend class BearResourceManager;
+		BearResource(const BearName&name,const C&c):m_resource(c),m_name(name){}
+		inline ~BearResource() { /*m_resource.Clear();*/ }
+		BearName m_name;
+		C m_resource;
 	public:
-		BearResource():m_data(0){}
-		inline ~BearResource() {  }
-
-		inline bool empty() const
+		inline const C&get()const
 		{
-			return !m_data;
+			return m_resource;
 		}
-		template<class P>
-		inline P*&get()
+		inline const C*operator->()const
 		{
-			return reinterpret_cast<P*&>(m_data);
+			return &m_resource;
 		}
-		template<class P>
-		inline const P*get()const
+		inline const BearName&get_name()const
 		{
-			return reinterpret_cast<const P*>(m_data);
+			return m_name;
 		}
-	private:
-		void*m_data;
 	};
 }

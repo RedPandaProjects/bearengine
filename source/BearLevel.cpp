@@ -1,222 +1,470 @@
 #include "BearEngine.hpp"
- BEARENGINE_API BearEngine::BearLevel*BearEngine::CurrentLevel=0;
- static const bchar*LevelsPath = TEXT("..\\..\\content\\stalker2d\\levels\\");
-BearEngine::BearLevel::BearLevel(const bchar*name)
+static uint32 level_version = 4;
+static uint32 spawn_version = 2;
+
+BEARENGINE_API BearEngine::BearLevel* BearEngine::GLevel=0;
+
+#ifdef EDITOR
+BearEngine::BearLevel::BearLevel(const BearName & type):BearObject(type,BO_OnlyOne),Width(0),Height(0),TileWidth(0),TileHeight(0)
 {
-	BearCore::BearStringPath path;
-	BearCore::BearString::Copy(path, LevelsPath);
-	BearCore::BearString::Contact(path, name);
-	BearCore::BearString::Contact(path, TEXT("\\level.tmx"));
+	m_terrain = GObjectManager->Create<BearTerrain>(TEXT("BearEngine::BearTerrain"));
+}
+BearEngine::BearLevel::~BearLevel()
+{
+	Clear();
+	m_terrain->Destroy();
+}
+void BearEngine::BearLevel::Compile(const bchar * name)
+{
+	BearCore::FS->SubPath(TEXT("%level%"));
+	BearCore::FS->AppendPath(TEXT("%level%"), name, TEXT("%levels%"), 0);
+	BearCore::BearLog::Printf(TEXT("Compile level [%s] start"), name);
 	BearCore::BearXML XML;
 	BearCore::BearString out1, out2;
-	BEAR_ASSERT(XML.loadFromFile(path, out1, out2));
-	auto map = XML.getNode("map");
+
+	BearCore::FS->CreatePath(TEXT("%level%"), 0);
+
+	BEAR_ASSERT(XML.LoadFromStream(**BearCore::FS->Read(TEXT("%import%"), name, TEXT(".tmx")), BearCore::BearEncoding::UTF8, out1, out2));
+
+	auto LevelFile = BearCore::FS->Write(TEXT("%level%"), TEXT("level"), 0);
+	auto LayerFile = BearCore::FS->Write(TEXT("%level%"), TEXT("level.layer"), 0);
+	auto CollisionFile = BearCore::FS->Write(TEXT("%level%"), TEXT("level.collision"), 0);
+	auto SpawnFile = BearCore::FS->Write(TEXT("%level%"), TEXT("level.spawn"), 0);
+
+
+	auto map = XML.GetNode("map");
 	BEAR_ASSERT(map);
-	m_width = 0;
-	XML.getAtribute(map, "width", TEXT("0")).scanf(TEXT("%u"), &m_width);
-	BEAR_ASSERT(m_width);
-	m_height = 0;
-	XML.getAtribute(map, "height", TEXT("0")).scanf(TEXT("%u"), &m_height);
-	BEAR_ASSERT(m_height);
-	m_tile_width = 0;
-	XML.getAtribute(map, "tilewidth", TEXT("0")).scanf(TEXT("%u"), &m_tile_width);
-	BEAR_ASSERT(m_tile_width);
-	m_tile_height = 0;
-	XML.getAtribute(map, "tileheight", TEXT("0")).scanf(TEXT("%u"), &m_tile_height);
-	BEAR_ASSERT(m_tile_height);
-	auto tileset = XML.getNode(map, "tileset");
-	BearCore::BearVector<bsize> tile_level;
+	uint32 width = 0;
+	XML.GetAtribute(map, "width", TEXT("0")).scanf(TEXT("%u"), &width);
+	BEAR_ASSERT(width);
+	uint32 height = 0;
+	XML.GetAtribute(map, "height", TEXT("0")).scanf(TEXT("%u"), &height);
+	BEAR_ASSERT(height);
+	uint32 tile_width = 0;
+	XML.GetAtribute(map, "tilewidth", TEXT("0")).scanf(TEXT("%u"), &tile_width);
+	BEAR_ASSERT(tile_width);
+	uint32 tile_height = 0;
+	XML.GetAtribute(map, "tileheight", TEXT("0")).scanf(TEXT("%u"), &tile_height);
+	BEAR_ASSERT(tile_height);
+
+	BearCore::BearLog::Printf(TEXT("Size [%ux%u] TileSize [%ux%u]"), width, height, tile_width, tile_height);
+	BearCore::BearLog::Printf(TEXT("Saving... Level"));
+	LevelFile->WriteUint32(level_version);
+	LevelFile->WriteUint32(width);
+	LevelFile->WriteUint32(height);
+	LevelFile->WriteUint32(tile_width);
+	LevelFile->WriteUint32(tile_height);
+
+
+
+	bsize tell_count_tile = LevelFile->Tell();
+	LevelFile->WriteUint32(0);
+	BearCore::BearVector < BearCore::BearMemoryRef<BearLevelTileset>> tilesets;
+
+	BearCore::BearString name_terrain,terrain_texture1, terrain_texture2, terrain_texture3;
+
+	auto imagelayer = XML.GetNode(map, "imagelayer");
+	while (imagelayer)
+	{
+		if (XML.GetAtribute(imagelayer, "name", TEXT("")) == TEXT("terrain"))
+		{
+			auto image = XML.GetNode(imagelayer, "image");
+			BEAR_ASSERT(image);
+			BearCore::BearString source = BearCore::BearFileManager::GetFileName(*XML.GetAtribute(image, "source", TEXT("")));
+			if (source.to_char_with_end(TEXT('/')))
+				source++;
+			else
+				source.seek(0);
+			name_terrain = source;
+			auto properties = XML.GetNode(imagelayer, "properties"); 
+			auto property = XML.GetNode(properties, "property");
+			while (property)
+			{
+				auto name_p = XML.GetAtribute(property, "name", TEXT(""));
+				if (name_p == TEXT("texture1"))
+				{
+					terrain_texture1 = XML.GetAtribute(property, "value", TEXT(""));
+				}
+				else if (name_p == TEXT("texture2"))
+				{
+					terrain_texture2= XML.GetAtribute(property, "value", TEXT(""));
+				}
+				else if (name_p == TEXT("texture3"))
+				{
+					terrain_texture3 = XML.GetAtribute(property, "value", TEXT(""));
+				}
+				property = XML.NextNode(property, "property");
+			}
+			break;
+		}
+		imagelayer = XML.NextNode(imagelayer, "imagelayer");
+	}
+	
+	LevelFile->WriteString(name_terrain,BearCore::BearEncoding::UTF16);
+	LevelFile->WriteString(terrain_texture1, BearCore::BearEncoding::UTF16);
+	LevelFile->WriteString(terrain_texture2, BearCore::BearEncoding::UTF16);
+	LevelFile->WriteString(terrain_texture3, BearCore::BearEncoding::UTF16);
+	auto tileset = XML.GetNode(map, "tileset");
+	BearCore::BearVector<uint32> tile_level;
+	uint32 count_tileset = 0;
 	while (tileset)
 	{
-		BearLevelTileset *Tileset = BearCore::bear_new< BearLevelTileset>();;
-		bsize firstgid = 0, width_texture = 0, height_texture = 0;
-		XML.getAtribute(tileset, "firstgid", TEXT("0")).scanf(TEXT("%u"), &firstgid);
+		uint32 firstgid = 0, spacing = 0, tileset_width = 0, tileset_height = 0, width_texture = 0, height_texture = 0;
+		XML.GetAtribute(tileset, "firstgid", TEXT("0")).scanf(TEXT("%u"), &firstgid);
 		BEAR_ASSERT(firstgid);
-		Tileset->spacing = 0;
-		XML.getAtribute(tileset, "spacing", TEXT("0")).scanf(TEXT("%u"), &Tileset->spacing);
-		Tileset->tile_width = 0;
-		XML.getAtribute(tileset, "tilewidth", TEXT("0")).scanf(TEXT("%u"), &Tileset->tile_width);
-		BEAR_ASSERT(Tileset->tile_width);
-		Tileset->tile_height = 0;
-		XML.getAtribute(tileset, "tileheight", TEXT("0")).scanf(TEXT("%u"), &Tileset->tile_height);
-		BEAR_ASSERT(Tileset->tile_height);
-		auto image = XML.getNode(tileset, "image");
+
+		XML.GetAtribute(tileset, "spacing", TEXT("0")).scanf(TEXT("%u"), &spacing);
+		XML.GetAtribute(tileset, "tilewidth", TEXT("0")).scanf(TEXT("%u"), &tileset_width);
+		XML.GetAtribute(tileset, "tileheight", TEXT("0")).scanf(TEXT("%u"), &tileset_height);
+
+		auto image = XML.GetNode(tileset, "image");
 		BEAR_ASSERT(image);
 
-		BearCore::BearString temp, source;
-		temp = XML.getAtribute(image, "source", TEXT(""));
-		BEAR_ASSERT(temp.size());
-		temp.find_with_end(TEXT("/"));
-		temp++;
-		temp.read_to(TEXT('.'), source);
+		BearCore::BearString source = BearCore::BearFileManager::GetFileName(*XML.GetAtribute(image, "source", TEXT("")));
+		if (source.to_char_with_end(TEXT('/')))
+			source++;
+		else
+			source.seek(0);
+		BEAR_ASSERT(source.size());
 
-		XML.getAtribute(image, "width", TEXT("0")).scanf(TEXT("%d"), &width_texture);
+		XML.GetAtribute(image, "width", TEXT("0")).scanf(TEXT("%d"), &width_texture);
 		BEAR_ASSERT(width_texture);
-		XML.getAtribute(image, "height", TEXT("0")).scanf(TEXT("%d"), &height_texture);
+		XML.GetAtribute(image, "height", TEXT("0")).scanf(TEXT("%d"), &height_texture);
 		BEAR_ASSERT(height_texture);
 
-		bsize cout_x = width_texture / (Tileset->tile_width);
-		bsize cout_y = height_texture / (Tileset->tile_height);
-		for (bsize y = 0; y < cout_y; y++)
-			for (bsize x = 0; x < cout_x; x++)
+		LevelFile->WriteString(*source, BearCore::BearEncoding::UTF16);
+		LevelFile->WriteUint32(tileset_width);	LevelFile->WriteUint32(tileset_height);
+		LevelFile->WriteUint32(spacing);
+
+		uint32 cout_x = width_texture / (tileset_width);
+		uint32 cout_y = height_texture / (tileset_height);
+
+		LevelFile->WriteUint32(cout_x*cout_y);
+
+		for (uint32 y = 0; y < cout_y; y++)
+			for (uint32 x = 0; x < cout_x; x++)
 			{
-				BearSprite*sprite = BearSprite::Create(*source, false);
-				sprite->getSize().set(static_cast<float>(Tileset->tile_width), static_cast<float>(Tileset->tile_height));
-				sprite->getUV().set(static_cast<float>((Tileset->tile_height + Tileset->spacing)*x) / static_cast<float>(width_texture), static_cast<float>((Tileset->tile_height + Tileset->spacing)*y) / static_cast<float>(height_texture), static_cast<float>(Tileset->tile_width) / static_cast<float>(width_texture), static_cast<float>(Tileset->tile_height) / static_cast<float>(height_texture));
-				Tileset->layer.push_back(sprite);
+				LevelFile->WriteFloat(static_cast<float>((tileset_width + spacing)*x) / static_cast<float>(width_texture));
+				LevelFile->WriteFloat(static_cast<float>((tileset_height + spacing)*y) / static_cast<float>(height_texture));
+				LevelFile->WriteFloat(static_cast<float>(tileset_width) / static_cast<float>(width_texture));
+				LevelFile->WriteFloat(static_cast<float>(tileset_height) / static_cast<float>(height_texture));
+
 			}
 		BEAR_ASSERT(BearCore::bear_lower_bound(tile_level.begin(), tile_level.end(), firstgid) == tile_level.end());
 		tile_level.push_back(firstgid);
-		m_tilesets.push_back(Tileset);
-		tileset = XML.nextNode(tileset, "tileset");
-
+		tileset = XML.NextNode(tileset, "tileset");
+		count_tileset++;
 	}
-	auto layer = XML.getNode(map, "layer");
+	LevelFile->Seek(tell_count_tile);
+	LevelFile->WriteUint32(count_tileset);
+	LevelFile.clear();
+
+	BearCore::BearLog::Printf(TEXT("Saving... level.layer"));
+	LayerFile->WriteUint32(0);
+	auto layer = XML.GetNode(map, "layer");
+	uint32 count_layer = 0;
 	while (layer)
 	{
-		BearLevelLayer *Layer = BearCore::bear_new< BearLevelLayer>();;
-		auto data = XML.getNode(layer, "data");
-		auto tile = XML.getNode(data, "tile");
+		BearCore::BearString name_l = BearCore::BearFileManager::GetFileName(*XML.GetAtribute(layer, "name", TEXT("")));
+		LayerFile->WriteString(name_l, BearCore::BearEncoding::UTF16);
+		auto data = XML.GetNode(layer, "data");
+		auto tile = XML.GetNode(data, "tile");
+
 		while (tile)
 		{
-			bsize gid = 0;
-			XML.getAtribute(tile, "gid", TEXT("0")).scanf(TEXT("%u"), &gid);
+			uint32 gid = 0;
+			XML.GetAtribute(tile, "gid", TEXT("0")).scanf(TEXT("%u"), &gid);
 			if (gid)
 			{
 				auto item = BearCore::bear_lower_bound(tile_level.begin(), tile_level.end(), gid + 1);
-
-				Layer->layer.push_back(BearCore::BearVector2<bsize>(item - tile_level.begin(), gid - *tile_level.begin()));
+				LayerFile->WriteUint32(static_cast<uint32>(item - tile_level.begin()));
+				LayerFile->WriteUint32(gid - (*tile_level.begin()));
 			}
 			else
 			{
-				Layer->layer.push_back(BearCore::BearVector2<bsize>(0, 0));
+				LayerFile->WriteUint32(0);
+				LayerFile->WriteUint32(0);
 			}
-			tile = XML.nextNode(tile, "tile");
+
+			tile = XML.NextNode(tile, "tile");
 		}
-		BEAR_ASSERT(Layer->layer.size() == m_width * m_height);
-		m_layers.push_back(Layer);
-		layer = XML.nextNode(layer, "layer");
+		count_layer++;
+		layer = XML.NextNode(layer, "layer");
 	};
-	auto objectgroup = XML.getNode(map, "objectgroup");
+	LayerFile->Seek(0);
+	LayerFile->WriteUint32(count_layer);
+	LayerFile.clear();
+
+	BearCore::BearLog::Printf(TEXT("Size layer[%u] byte"), count_layer*width*height * sizeof(uint32) * 2);
+
+	BearCore::BearLog::Printf(TEXT("Saving... level.collision and level.spawn"));
+
+	CollisionFile->WriteUint32(0);
+	uint32 count_collider = 0;
+	SpawnFile->WriteUint32(spawn_version);
+	SpawnFile->WriteUint32(0);
+	uint32 count_spawn = 0;
+
+	auto objectgroup = XML.GetNode(map, "objectgroup");
 	if (!objectgroup)return;
-	auto object = XML.getNode(objectgroup, "object");
+	auto object = XML.GetNode(objectgroup, "object");
 	while (object)
 	{
 		bint x_obj = 0, y_obj = 0;
 		bsize width_obj = 0, height_obj = 0;
-		XML.getAtribute(object, "x", TEXT("0")).scanf(TEXT("%d"), &x_obj);
-		XML.getAtribute(object, "y", TEXT("0")).scanf(TEXT("%d"), &y_obj);
+		XML.GetAtribute(object, "x", TEXT("0")).scanf(TEXT("%d"), &x_obj);
+		XML.GetAtribute(object, "y", TEXT("0")).scanf(TEXT("%d"), &y_obj);
 
-		XML.getAtribute(object, "width", TEXT("0")).scanf(TEXT("%u"), &width_obj);
-		XML.getAtribute(object, "height", TEXT("0")).scanf(TEXT("%u"), &height_obj);
+		XML.GetAtribute(object, "width", TEXT("0")).scanf(TEXT("%u"), &width_obj);
+		XML.GetAtribute(object, "height", TEXT("0")).scanf(TEXT("%u"), &height_obj);
 		BearCore::BearString type, objname;
-		type = XML.getAtribute(object, "type", TEXT(""));
+		type = XML.GetAtribute(object, "type", TEXT(""));
 		BEAR_ASSERT(type.size());
-		objname = XML.getAtribute(object, "name", TEXT(""));
+		objname = XML.GetAtribute(object, "name", TEXT(""));
 		if (type == TEXT("Collider"))
 		{
 			if (width_obj&&height_obj)
 			{
-				BearPhysicsCollider*collider = BearPhysicsCollider::Create(BearCore::BearVector2<float>((float)x_obj, (float)y_obj+ (float)height_obj), BearCore::BearVector2<float>((float)width_obj, (float)height_obj));
-				m_collider.push_back(collider);
+				CollisionFile->WriteFloat((float)x_obj);	CollisionFile->WriteFloat((float)y_obj); CollisionFile->WriteFloat((float)width_obj); CollisionFile->WriteFloat((float)height_obj);
+				count_collider++;
 			}
 		}
 		else
 		{
-		if (objname.size())
-		{
-			BearObject*obj = GameFactory->createObject(BearObjectType(*BearCore::BearEncoding::ToANSI(*type)));
-			obj->create(BearCore::BearVector2<float>((float)x_obj, (float)y_obj - (float)height_obj));
-			m_objects.insert(*objname, obj);
+			count_spawn++;
+			SpawnFile->WriteString(type,BearCore::BearEncoding::UTF16);
+			SpawnFile->WriteString(objname, BearCore::BearEncoding::UTF16);
+			SpawnFile->WriteFloat((float)x_obj); SpawnFile->WriteFloat((float)y_obj - (float)height_obj);
+			SpawnFile->WriteFloat((float)width_obj); SpawnFile->WriteFloat((float)height_obj);
 		}
-		else
-		{
-			BearObject*obj = GameFactory->createObject(BearObjectType(*BearCore::BearEncoding::ToANSI(*type)));
-			obj->create(BearCore::BearVector2<float>((float)x_obj, (float)y_obj - (float)height_obj));
-			m_objects_without_name.push_back(obj);
-			object = XML.nextNode(object, "object");
-		}
-		}
-		object = XML.nextNode(object, "object");
+		object = XML.NextNode(object, "object");
 	}
-	
+	BearCore::BearLog::Printf(TEXT("Size spawn [%u]"), count_spawn);
+	BearCore::BearLog::Printf(TEXT("Size collider [%u]"), count_collider);
+	SpawnFile->Seek(4);
+	SpawnFile->WriteUint32(count_spawn);
+	SpawnFile.clear();
+	CollisionFile->Seek(0);
+	CollisionFile->WriteUint32(count_collider);
+	CollisionFile.clear();
+	BearCore::BearLog::Printf(TEXT("Compile level end"));
 }
-
-BearEngine::BearLevel * BearEngine::BearLevel::Create(bchar * name)
+void BearEngine::BearLevel::Destroy()
 {
-	auto th=BearCore::bear_alloc<BearLevel>(1);
-	return new(th)BearLevel(name);
+	BEAR_OBJECT_DESTROY(BearLevel);
 }
-
-void BearEngine::BearLevel::destroy()
+template<class C>
+inline bool frustum(C GlobalView,float x, float y, float x1, float y1)
 {
-	auto begin = m_tilesets.begin();
-	auto end = m_tilesets.end();
-	while (begin != end)
-	{
-		auto beginl = (*begin)->layer.begin();
-		auto endl = (*begin)->layer.end();
-		while (beginl != endl)
-		{
-			(*beginl)->destroy();
-			beginl++;
-		}
-		begin++;
-	}
-	m_layers.clear();
-	m_tilesets.clear();
-	m_objects.clear();
-	m_objects_without_name.clear();
-	this->~BearLevel();
-	BearCore::bear_free(this);
+
+	if (x + x1 > GlobalView.x&&x < GlobalView.x1 + GlobalView.x)
+		if (y + y1 > GlobalView.y&&y < GlobalView.y1 + GlobalView.y)
+			return true;
+	return false;
 }
-
-void BearEngine::BearLevel::update(float time)
+void BearEngine::BearLevel::Update(float time)
 {
-	for (bsize i = 0; i < m_layers.size(); i++)
+	m_terrain->Update(time);
+	for (bsize i = 0; i < Layers.size(); i++)
 	{
 		bsize x = 0;
 		bsize y = 0;
-		auto begin = m_layers[i]->layer.begin();
-		auto end = m_layers[i]->layer.end();
+		auto begin = Layers[i]->Layer.begin();
+		auto end = Layers[i]->Layer.end();
+
+		auto GlobalView = GRender->GetView();
+
 		while (begin != end)
 		{
-			if (begin->x)
+			if (begin->x&&frustum(GlobalView,static_cast<float>(x*TileWidth), static_cast<float>(y*TileHeight), static_cast<float>(Tilesets[begin->x - 1]->TileWidth), static_cast<float>(Tilesets[begin->x - 1]->TileHeight)))
 			{
-				auto&sprite = m_tilesets[begin->x - 1]->layer[begin->y];
-				sprite->getPosition().set(static_cast<float>(x*m_tile_width), static_cast<float>(y*m_tile_height));
-				sprite->draw();
-			
+				auto&sprite = Tilesets[begin->x - 1]->ListTile[begin->y];
+				sprite->Position.set(static_cast<float>(x*TileWidth), static_cast<float>(y*TileHeight));
+				sprite->Update(time);
+
 			}
 			x++;
-			if (x == m_width) {
+			if (x == Width) {
 				x = 0; y++;
 			}
 			begin++;
 		}
 	}
 	{
-		auto begin = m_objects_without_name.begin();
-		auto end = m_objects_without_name.end();
+		auto begin = Objects.begin();
+		auto end = Objects.end();
 		while (begin != end)
 		{
-			(*begin)->update(time);
+			(*begin)->Update(time);
+			begin++;
+		}
+	}
+}
+void BearEngine::BearLevel::Save(BearCore::BearOutputStream * stream)
+{
+}
+void BearEngine::BearLevel::Load(const BearCore::BearInputStream * stream)
+{
+}
+void BearEngine::BearLevel::EndLoad()
+{
+}
+void BearEngine::BearLevel::SpawnObject(const BearName & Type, const BearName & Name, const BearCore::BearVector4<float>& Rect)
+{
+	Objects.push_back(GObjectManager->Create<BearObjectLevel>(Type));
+	Objects.back()->Name = Name;
+	Objects.back()->Rect = Rect;
+	Objects.back()->Spawn();
+}
+void BearEngine::BearLevel::Clear()
+{
+	{
+		auto begin = Tilesets.begin();
+		auto end = Tilesets.end();
+		while (begin != end)
+		{
+			auto beginl = (*begin)->ListTile.begin();
+			auto endl = (*begin)->ListTile.end();
+			while (beginl != endl)
+			{
+				(*beginl)->Destroy();
+				beginl++;
+			}
 			begin++;
 		}
 	}
 	{
-		auto begin = m_objects.begin();
-		auto end = m_objects.end();
+		auto begin = Objects.begin();
+		auto end = Objects.end();
 		while (begin != end)
 		{
-			(begin->second)->update(time);
+			(*begin)->Destroy();
 			begin++;
 		}
 	}
+	Tilesets.clear();
+	MapTilesetsID.clear();
+	Layers.clear();
+	MapLayersID.clear();
+	Objects.clear();
 }
-
-
-
-BearEngine::BearLevel::~BearLevel()
+void BearEngine::BearLevel::Load(const bchar * name)
 {
+	BearCore::FS->SubPath(TEXT("%level%"));
+	BearCore::FS->AppendPath(TEXT("%level%"), name, TEXT("%levels%"), 0);
+	BearCore::BearLog::Printf(TEXT("Level set [%s]"), name);
+	LoadLevel();
+	LoadLayer();
+	LoadCollision();
+	LoadSpawn();
+	EndLoad();
 }
+void BearEngine::BearLevel::LoadLevel()
+{
+	BearCore::BearLog::Printf(TEXT("Loading... Level"));
+	auto LevelFile = BearCore::FS->Read(TEXT("%level%"), TEXT("level"));
+	BEAR_ASSERT(LevelFile->ReadUint32() == level_version);
+	Width = LevelFile->ReadUint32();
+	Height = LevelFile->ReadUint32();
+	TileWidth = LevelFile->ReadUint32();
+	TileHeight = LevelFile->ReadUint32();
+	uint32 count_tileset = LevelFile->ReadUint32();
+	BearCore::BearString terrain,t_texture1, t_texture2, t_texture3;
+	LevelFile->ReadString(terrain);
+	LevelFile->ReadString(t_texture1);	LevelFile->ReadString(t_texture2);	LevelFile->ReadString(t_texture3);
+	m_terrain->Load(*terrain,Width*TileWidth,Height*TileHeight,*t_texture1,*t_texture2,*t_texture3);
+	BearCore::BearString texture;
+	for (uint32 i = 0; i < count_tileset; i++)
+	{
+
+		MapTilesetsID.insert(*texture, i);
+		texture.clear_no_free();
+		LevelFile->ReadString(texture);
+		BearLevelTileset*tileset = BearCore::bear_new< BearLevelTileset>();
+		tileset->TileWidth = LevelFile->ReadUint32();
+		tileset->TileHeight = LevelFile->ReadUint32();
+		tileset->Spacing = LevelFile->ReadUint32();
+		uint32 count_tile = LevelFile->ReadUint32();;
+		for (uint32 a = 0; a < count_tile; a++)
+		{
+			BearCore::BearVector4<float> UV;
+			UV.x = LevelFile->ReadFloat();
+			UV.y = LevelFile->ReadFloat();
+			UV.x1 = LevelFile->ReadFloat();
+			UV.y1 = LevelFile->ReadFloat();
+			BearTile*tile = GObjectManager->Create<BearTile>(TEXT("BearEngine::BearTile"));
+			tile->SetTexutre(*texture);
+			tile->Size.set(static_cast<float>(tileset->TileWidth), static_cast<float>(tileset->TileHeight));
+			tile->TextureUV = UV;
+			tileset->ListTile.push_back(tile);
+		}
+		Tilesets.push_back(tileset);
+	}
+}
+void BearEngine::BearLevel::LoadLayer()
+{
+	BearCore::BearLog::Printf(TEXT("Loading... Level.Layer"));
+	auto LayerFile = BearCore::FS->Read(TEXT("%level%"), TEXT("level.layer"));
+	uint32 count = LayerFile->ReadUint32();
+	for (uint32 i = 0; i < count; i++)
+	{
+		BearCore::BearString name;
+		LayerFile->ReadString(name);
+		MapLayersID.insert(*name, i);
+
+		BearLevelLayer*layer = BearCore::bear_new< BearLevelLayer>();
+		bsize count_l = Width * Height;
+		for (bsize a = 0; a < count_l; a++)
+		{
+			BearCore::BearVector2<bsize> t;
+			t.x = LayerFile->ReadUint32();
+			t.y = LayerFile->ReadUint32();
+			layer->Layer.push_back(t);
+		}
+		Layers.push_back(layer);
+	}
+
+}
+void BearEngine::BearLevel::LoadCollision()
+{
+	BearCore::BearLog::Printf(TEXT("Loading... Level.Collision"));
+	/*
+	BearCore::BearLog::Printf(TEXT("Loading... Level.Collision"));
+	auto CollisionFile = FS->Read(TEXT("%level%"), TEXT("level.collision"));
+	uint32 count = CollisionFile->ReadUint32();
+	for (uint32 i = 0; i < count; i++)
+	{
+		BearCore::BearVector2<float> pos, size;
+		pos.x = CollisionFile->ReadFloat();
+		pos.y = CollisionFile->ReadFloat();
+		size.x = CollisionFile->ReadFloat() / 2;
+		size.y = CollisionFile->ReadFloat() / 2;
+		colliders.push_back(BearPhysicsCollider::Create(pos, size, size));
+	}*/
+}
+void BearEngine::BearLevel::LoadSpawn()
+{
+	BearCore::BearLog::Printf(TEXT("Loading... Level.Spawn"));
+	auto SpawnFile = BearCore::FS->Read(TEXT("%level%"), TEXT("level.spawn"));
+	BEAR_ASSERT(SpawnFile->ReadUint32() == spawn_version);
+	uint32 count = SpawnFile->ReadUint32();
+	BearCore::BearString  objname,objtype;
+	for (uint32 i = 0; i < count; i++)
+	{
+		
+		objname.clear_no_free();
+		objtype.clear_no_free();
+		SpawnFile->ReadString(objtype);
+		SpawnFile->ReadString(objname);
+		BearCore::BearVector4<float> rect;
+		rect.x = SpawnFile->ReadFloat();
+		rect.y = SpawnFile->ReadFloat();
+		rect.x1 = SpawnFile->ReadFloat();
+		rect.y1 = SpawnFile->ReadFloat();
+		Objects.push_back(GObjectManager->Create<BearObjectLevel>(*objtype));
+		Objects.back()->Name = *objname;
+		Objects.back()->Rect = rect;
+		Objects.back()->Spawn();
+	}
+}
+#endif

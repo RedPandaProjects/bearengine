@@ -1,41 +1,29 @@
 #include "BearEngine.hpp"
 
-BearEngine::BearMaterialSprite::BearMaterialSprite():BearMaterial(BearResourcesController::GetPixelShader(TEXT("default")), BearResourcesController::GetVertexShader(TEXT("sprite")))
+BearEngine::BearMaterialSprite * BearEngine::BearMaterialSprite::Create()
 {
-	
+	auto type = BearCore::bear_alloc< BearMaterialSprite>(1);
+	return	new(type)BearMaterialSprite();
 }
 
 BearEngine::BearMaterialSprite::~BearMaterialSprite()
-{	
-	clear();
-}
-
-void BearEngine::BearMaterialSprite::setTexture1(BearTexture2DResource & texture)
 {
-	BearResourcesController::FreeTexture2D(m_texture);
-	m_texture = texture;
-}
 
-void BearEngine::BearMaterialSprite::setMatrix(BearCore::BearMatrix & matrix)
+}
+void BearEngine::BearMaterialSprite::destroy()
 {
-	m_matrix = matrix;
+	Texture->destroy();
+	this->~BearMaterialSprite();
+	BearCore::bear_free(this);
 }
-
-void BearEngine::BearMaterialSprite::setRGBA1(float R, float G, float B, float A)
+BearEngine::BearMaterialSprite::BearMaterialSprite() :BearMaterialInstance(BearMaterialController::MT_Sprite)
 {
-	m_texture_uv = BearCore::BearVector4<float>(R, G, B, A);
+	Texture = 0;
 }
-
 void BearEngine::BearMaterialSprite::set()
 {
-	BearMaterial::set();
-	BearRender::SetTexture2D("textuer", m_texture);
-	BearGraphics::BearRenderInterface::SetItemInVertexShader("matrix", m_matrix);
-	BearGraphics::BearRenderInterface::SetItemInVertexShader("textureUV",m_texture_uv.x,m_texture_uv.y,m_texture_uv.x1,m_texture_uv.y1);
-}
-
-void BearEngine::BearMaterialSprite::clear()
-{
-	BearResourcesController::FreeTexture2D(m_texture);
-	BearMaterial::clear();
+	material->setValue(0, Matrix);
+	material->setValue(1, Texture);
+	material->setValue(2, TextureUV.array);
+	__super::set();
 }

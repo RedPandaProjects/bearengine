@@ -1,35 +1,31 @@
 #include "BearEngine.hpp"
 
-BearEngine::BearMaterialDefault::BearMaterialDefault():BearMaterial(BearResourcesController::GetPixelShader(TEXT("default")), BearResourcesController::GetVertexShader(TEXT("default")))
+BearEngine::BearMaterialDefault * BearEngine::BearMaterialDefault::Create()
 {
-	
+	auto type = BearCore::bear_alloc< BearMaterialDefault>(1);
+	return	new(type)BearMaterialDefault();
 }
 
 BearEngine::BearMaterialDefault::~BearMaterialDefault()
-{	
-	clear();
+{
+
 }
 
-void BearEngine::BearMaterialDefault::setTexture1(BearTexture2DResource & texture)
+void BearEngine::BearMaterialDefault::destroy()
 {
-	BearResourcesController::FreeTexture2D(m_texture);
-	m_texture = texture;
+	Texture->destroy();
+	this->~BearMaterialDefault();
+	BearCore::bear_free(this);
 }
 
-void BearEngine::BearMaterialDefault::setMatrix(BearCore::BearMatrix & matrix)
+BearEngine::BearMaterialDefault::BearMaterialDefault():BearMaterialInstance(BearMaterialController::MT_Default)
 {
-	m_matrix = matrix;
+	Texture = 0;
 }
 
 void BearEngine::BearMaterialDefault::set()
 {
-	BearMaterial::set();
-	BearRender::SetTexture2D("textuer", m_texture);
-	BearGraphics::BearRenderInterface::SetItemInVertexShader("matrix", m_matrix);
-}
-
-void BearEngine::BearMaterialDefault::clear()
-{
-	BearResourcesController::FreeTexture2D(m_texture);
-	BearMaterial::clear();
+	material->setValue(0, Matrix);
+	material->setValue(1, Texture);
+	__super::set();
 }

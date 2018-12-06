@@ -7,23 +7,26 @@ static BearGraphics::BearBlendStateRef BlendStateAlpha;
 static BearGraphics::BearBlendStateRef BlendState;
 static BearGraphics::BearDepthStencilStateRef DepthStencilState;
 static BearGraphics::BearDepthStencilViewRef DepthStencilView;
- BearEngine::BearMeshObject Rect2DMesh;
+ BearEngine::BearMeshObject* Rect2DMesh;
+ BearCore::BearMatrix Othro;
+ extern BearCore::BearFileSystem *FS;
+ BearCore::BearVector4<float> GlobalView;
 void BearEngine::BearRender::Initialize()
 {
 	ViewPort.create(Window, false);
-	
-	Rect2DMesh.getVertexArray().resize(4);
-	Rect2DMesh.getVertexArray()[0] = BearVertex(0.f, 1.0f, 0, 0, 1);
-	Rect2DMesh.getVertexArray()[1] = BearVertex(1.f, 0.0f, 0, 1, 0);
-	Rect2DMesh.getVertexArray()[2] = BearVertex(0.f,0.0f, 0, 0,0);
-	Rect2DMesh.getVertexArray()[3] = BearVertex(1.f, 1.0f, 0,1, 1);
-	Rect2DMesh.getIndexArray().resize(6);
-	Rect2DMesh.getIndexArray()[0] = 2;
-	Rect2DMesh.getIndexArray()[1] = 1;
-	Rect2DMesh.getIndexArray()[2] = 0;
-	Rect2DMesh.getIndexArray()[3] = 1;
-	Rect2DMesh.getIndexArray()[4] = 3;
-	Rect2DMesh.getIndexArray()[5] = 0;
+	Rect2DMesh = BearEngine::BearMeshObject::Create();
+	Rect2DMesh->getVertexArray().resize(4);
+	Rect2DMesh->getVertexArray()[0] = BearVertex(0.f, 1.0f, 0, 0, 1);
+	Rect2DMesh->getVertexArray()[1] = BearVertex(1.f, 0.0f, 0, 1, 0);
+	Rect2DMesh->getVertexArray()[2] = BearVertex(0.f,0.0f, 0, 0,0);
+	Rect2DMesh->getVertexArray()[3] = BearVertex(1.f, 1.0f, 0,1, 1);
+	Rect2DMesh->getIndexArray().resize(6);
+	Rect2DMesh->getIndexArray()[0] = 2;
+	Rect2DMesh->getIndexArray()[1] = 1;
+	Rect2DMesh->getIndexArray()[2] = 0;
+	Rect2DMesh->getIndexArray()[3] = 1;
+	Rect2DMesh->getIndexArray()[4] = 3;
+	Rect2DMesh->getIndexArray()[5] = 0;
 
 
 
@@ -39,11 +42,12 @@ void BearEngine::BearRender::Initialize()
 	initializer.appendItem(TEXT("POSITION"), BearGraphics::ILE_R32G32B32_FLOAT);
 	initializer.appendItem(TEXT("UV"), BearGraphics::ILE_R32G32_FLOAT);
 
-	BearGraphics::BearShaderVertexCompilerRef vertexCompiler;
+;
 	BearCore::BearString out;
-	BEAR_ASSERT(vertexCompiler.compileFromFile(TEXT("..\\..\\content\\stalker2d\\shaders\\dx11\\default.vs"), BearCore::BearEncoding::UTF8, out));
+	BearShaderManager::CompileVertexShader(TEXT("default"));
+	BearCore::BearMemoryStream vertexBuffer(**FS->read(TEXT("%app_shaders_cur%"), TEXT("default"), TEXT(".vs.bin")));
 
-	VertexInputLayoutDefault= BearGraphics::BearVertexInputLayoutRef(initializer, vertexCompiler.begin(), vertexCompiler.getSize());
+	VertexInputLayoutDefault= BearGraphics::BearVertexInputLayoutRef(initializer, vertexBuffer.begin(), vertexBuffer.size());
 	BearGraphics::BearRenderInterface::SetVertexInputLayout(VertexInputLayoutDefault);
 
 	BearGraphics::BearDepthStencilStateInitializer DepthStencil;
@@ -80,6 +84,8 @@ void BearEngine::BearRender::Initialize()
 	BearGraphics::BearRenderInterface::AttachDepthStencilView(DepthStencilView);
 	BearGraphics::BearRenderInterface::SetDepthStencilState(DepthStencilState,0);
 
+	Othro.buildOrthoOffCenter(1024, 768, FLT_MIN, 100.f);
+
 }
 void BearEngine::BearRender::Clear()
 {
@@ -97,45 +103,59 @@ void BearEngine::BearRender::Swap()
 void BearEngine::BearRender::Destory()
 {
 	ViewPort.close();
-	Rect2DMesh.clear();
+	Rect2DMesh->destroy();
 	SamplerDefault.clear();
 	VertexInputLayoutDefault.clear();
+	DepthStencilView.clear();
+	DepthStencilState.clear();
+	BlendState.clear();
+	BlendStateAlpha.clear();
 }
 
-void BearEngine::BearRender::OnAlpha()
+void BearEngine::BearRender::AlphaOn()
 {
 	BearGraphics::BearRenderInterface::SetBlendState(BlendStateAlpha, BearCore::BearColor::Transparent);
 }
 
-void BearEngine::BearRender::OffAlpha()
+void BearEngine::BearRender::AlphaOff()
 {
 	BearGraphics::BearRenderInterface::SetBlendState(BlendState, BearCore::BearColor::Transparent);
 }
 
-void BearEngine::BearRender::SetPixelShader(const BearPixelShaderResource & pixel)
+void BearEngine::BearRender::Set(const BearPixelShader * pixel)
 {
-	BearGraphics::BearRenderInterface::SetPixelShader(*pixel.get<BearGraphics::BearPixelShaderRef>());
+	BearGraphics::BearRenderInterface::SetPixelShader(*pixel->get<BearGraphics::BearPixelShaderRef>());
 }
 
-void BearEngine::BearRender::SetVertexShader(const BearVertexShaderResource & vertex)
+void BearEngine::BearRender::Set(const BearVertexShader* vertex)
 {
-	BearGraphics::BearRenderInterface::SetVertexShader(*vertex.get<BearGraphics::BearVertexShaderRef>());
+	BearGraphics::BearRenderInterface::SetVertexShader(*vertex->get<BearGraphics::BearVertexShaderRef>());
 }
 
-void BearEngine::BearRender::SetTexture2D(const char*name, const BearTexture2DResource & texture)
+void BearEngine::BearRender::SetPS(const char*name, const BearTexture2D * texture)
 {
-	BearGraphics::BearRenderInterface::SetItemInPixelShader(name,*texture.get<BearGraphics::BearTexture2DRef>(),SamplerDefault);
+	BearGraphics::BearRenderInterface::SetItemToPixelShader(name,*texture->get<BearGraphics::BearTexture2DRef>(),SamplerDefault);
 }
-
-void BearEngine::BearRender::DrawMeshObject(BearMeshObject & mesh, BearMaterial * material)
+void BearEngine::BearRender::SetVS(const char*name, const BearTexture2D * texture)
+{
+	BearGraphics::BearRenderInterface::SetItemToVertexShader(name, *texture->get<BearGraphics::BearTexture2DRef>(), SamplerDefault);
+}
+void BearEngine::BearRender::DrawMeshObject(BearMeshObject * mesh, BearMaterialInstance * material)
 {
 	
-	BearGraphics::BearRenderInterface::SetIndexBuffer(*mesh.getIndexBuffer().get<BearGraphics::BearIndexBufferRef>());
-	BearGraphics::BearRenderInterface::SetVertexBuffer(*mesh.getVertexBuffer().get<BearGraphics::BearVertexBufferRef>(),BearVertexSize);
+	BearGraphics::BearRenderInterface::SetIndexBuffer(*mesh->getIndexBuffer()->get<BearGraphics::BearIndexBufferRef>());
+	BearGraphics::BearRenderInterface::SetVertexBuffer(*mesh->getVertexBuffer()->get<BearGraphics::BearVertexBufferRef>(),static_cast<uint32>(BearVertex::getSize()));
 	material->set();
-	if (material->alpha())OnAlpha();
-	BearGraphics::BearRenderInterface::Draw(mesh.getSizeIndex());
-	if (material->alpha())OffAlpha();
+	if (material->suportAlpha())AlphaOn();
+	BearGraphics::BearRenderInterface::Draw(mesh->getSizeIndex());
+	if (material->suportAlpha())AlphaOff();
+}
+
+void BearEngine::BearRender::SetView(const BearCore::BearVector4<float>& view)
+{
+	GlobalView = view;
+	Othro.buildOrthoOffCenter(view.x1, view.y1, FLT_MIN, 100.f);
+	Othro = BearCore::BearMatrix().buildIdentity().translation(-view.x, -view.y, 0)*Othro  ;
 }
 
 

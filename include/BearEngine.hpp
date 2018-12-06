@@ -1,57 +1,51 @@
+#pragma once
 #include "BearCore.hpp"
+#include "BearGraphics.hpp"
+#include "BearSound.hpp"
+#include "Box2D/Box2D.h"
+
 #ifdef BEAR_ENGINE_EXPORTS
 #define BEARENGINE_API BEARPROJECT_EXPORT
-#include "BearGraphics.hpp"
 #else
 #define BEARENGINE_API BEARPROJECT_IMPORT
 #endif
 
+
+#include "BearCore/BearName.h"
+#include "BearCore/BearObject.h"
+
+#include "BearCore/BearObjectManager.h"
+
+#include "BearCore/BearConfig.h"
+#include "BearCore/BearIncluder.h"
+
+#include "BearCore/BearEngine.h"
+#include "BearCore/BearEditor.h"
+
+#include "BearResource/BearFont.h"
+#include "BearResource/BearAnimateArray2D.h"
+
 #include "BearResource/BearResource.h"
-#include "BearResource/BearResourceWithName.h"
-#include "BearResource/BearMultiResource.h"
-#include "BearGame/BearObject.h"
+#include "BearResource/BearResourceManager.h"
 
-#include "BearGame/BearObjectType.h"
-
-#include "BearResource/BearResourcesController.h"
-
-#include "BearRender/BearTexture2D.h"
-#include "BearRender/BearVertexShader.h"
-#include "BearRender/BearPixelShader.h"
-#include "BearRender/BearIndexBuffer.h"
-#include "BearRender/BearVertexBuffer.h"
-
-#include "BearMesh/BearMeshObject.h"
-
-#include "BearMaterials/BearMaterial.h"
-#include "BearMaterials/BearMaterialInstance.h"
-#include "BearMaterials/BearMaterialController.h"
-#include "BearMaterials/BearMaterialDefault.h"
-#include "BearMaterials/BearMaterialSprite.h"
-#include "BearMaterials/BearMaterialSpriteAlpha.h"
-
+#include "BearRender/BearShader.h"
+#include "BearRender/BearSampler.h"
+#include "BearRender/BearVertex.h"
+#include "BearRender/BearVertexArray.h"
 #include "BearRender/BearRender.h"
-#include "BearRender/BearDevice.h"
+#include "BearRender/BearViewport.h"
 
+#include "Bear2D/Bear2DPlane.h"
+#include "Bear2D/BearTile.h"
 #include "Bear2D/BearSprite.h"
+#include "Bear2D/BearRenderText.h"
+#include "Bear2D/BearSpriteAnimater.h"
 
-#include "BearPhysics/BearPhysicsWorld.h"
-#include "BearPhysics/BearPhysicsCollider.h"
+#include "BearIO/BearInput.h"
 
+#include "BearLevel/BearObjectLevel.h"
+#include "BearLevel/BearTerrain.h"
 #include "BearLevel/BearLevel.h"
 
-#include "BearGame/BearGameFactory.h"
-#include "BearGame/BearGameManager.h"
-/*
-#include "Bear2D/BearSprite.h"
-
-
-
-
-
-
-#include "BearPhysics/BearPhysicsWorld.h"
-#include "BearPhysics/BearPhysicsShape.h"
-#include "BearPhysics/BearPhysicsBody.h"
-
-*/
+#include "BearCore/BearGameController.h"
+#include "BearCore/BearConsole.h"

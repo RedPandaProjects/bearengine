@@ -22,13 +22,19 @@ namespace BearEngine
 			SetMousePosition(BearCore::BearFVector2(x,y));
 		}
 		virtual void Destroy();
+		inline const BearCore::BearString&GetInputString()
+		{
+			return m_input_string;
+		}
 	private:
+
 		virtual void Update(float time) override;
 		virtual void Save(BearCore::BearOutputStream*stream) override;
 		virtual void Load(const BearCore::BearInputStream*stream) override;
 #ifdef BEAR_ENGINE_EXPORTS
 	public:
 #endif
+		BearCore::BearString m_input_string;
 		friend BearViewport;
 		enum KeyStats
 		{

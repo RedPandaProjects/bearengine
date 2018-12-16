@@ -1,17 +1,28 @@
 #pragma once
 namespace BearEngine
 {
-	class BEARENGINE_API BearViewport:public BearGraphics::BearViewport,public BearObject
+	class BEARENGINE_API BearViewport:public BearGraphics::BearViewport,public BearObject,public BearObjectResize
 	{
 		BEAR_OBJECT(BearViewport);
 		BearViewport(const BearName&type);
 		~BearViewport();
 		friend class BearRender;
 	public:
+		bool IsFullScreen()const
+		{
+			return FullScreen;
+		}
 		virtual void Resize(bsize wigth, bsize height) override;
 		virtual void SetFullScreen(bool fullscreen) override;
-		BearCore::BearFVector2 GetSizeFloat()const;
-		BearCore::BearVector2<bsize> GetSize()const;
+		inline BearCore::BearFVector2 GetSizeFloat()const
+		{
+			return BearCore::BearVector2<float>(static_cast<float>(Width), static_cast<float>(Height));
+		}
+		
+		inline BearCore::BearVector2<bsize> GetSize()const
+		{
+			return BearCore::BearVector2<bsize>(Width, Height);
+		}
 		bool Update();
 		virtual void Destroy() override;
 		inline 
@@ -44,5 +55,5 @@ namespace BearEngine
 		BearGraphics::BearShaderConstantsRef m_sconst_othro;
 		BearCore::BearMatrix m_othro;
 	};
-	BEARENGINE_API extern BearViewport*GGeneralViewport;
+
 }

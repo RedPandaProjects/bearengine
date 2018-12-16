@@ -58,7 +58,7 @@ void BearEngine::BearRenderText::Update(float time)
 				GRender->SetPixel(0, m_sampler);
 
 				TextureUV = item->second.textureUV;
-				if (pos.x + item->second.advance > MaxWidth)
+				if (pos.x + item->second.advance > MaxWidth&&MaxWidth!=0.f)
 				{
 					pos.y += font->GetSize();
 					pos.x = Position.x;
@@ -74,8 +74,8 @@ void BearEngine::BearRenderText::Update(float time)
 					m_vectex[1].Position.set(x + width, y);
 					m_vectex[2].Position.set(x, y);
 					m_vectex[3].Position.set(x + width, y + height);
-					m_vectex[0].TextureUV.set(TextureUV.x, TextureUV.y1);
-					m_vectex[1].TextureUV.set(TextureUV.x1 + TextureUV.x, TextureUV.y + TextureUV.y);
+					m_vectex[0].TextureUV.set(TextureUV.x, TextureUV.y + TextureUV.y1);
+					m_vectex[1].TextureUV.set(TextureUV.x1 + TextureUV.x, TextureUV.y );
 					m_vectex[2].TextureUV.set(TextureUV.x, TextureUV.y);
 					m_vectex[3].TextureUV.set(TextureUV.x1 + TextureUV.x, TextureUV.y1 + TextureUV.y);
 					GRender->SetVertex(0,m_type_matrix);

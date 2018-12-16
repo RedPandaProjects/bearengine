@@ -17,6 +17,7 @@ BearEngine::BearObjectManager::BearObjectManager()
 	GObjectManager->Registor < BearTile>();
 	GObjectManager->Registor < BearGameController>();
 	GObjectManager->Registor < BearConsole>();
+	GObjectManager->Registor < BearCallBack>();
 }
 
 BearEngine::BearObjectManager::~BearObjectManager()

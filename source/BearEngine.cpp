@@ -4,21 +4,23 @@ BEARENGINE_API BearEngine::BearEngine*BearEngine::GEngine=0;
 extern BearCore::BearMap <BearCore::BearStringConteniar, bsize> *MapName;
 extern BearCore::BearMap <bsize, BearCore::BearString> *MapNameID;
 extern BearCore::BearMap <BearCore::BearStringAnsiConteniar, BearCore::BearString> *MapType;
+
+
+
 void BearEngine::BearEngine::Loop()
 {
 
-	if (!GGeneralViewport)return;
+	if (!GRender->GetGeneralViewport())return;
 	BearCore::BearTimer timer;
 
-	while (GGeneralViewport->Update())
+	while (GRender->GetGeneralViewport()->Update())
 	{
-		GGeneralViewport->ClearColor(BearCore::BearColor::Black);
 		float time = timer.get_elapsed_time().asseconds();
 		timer.restart();
-		GGameController->Update(time);
-		GConsole->Update(time);
-		GLevel->Update(time);
-		GGeneralViewport->Swap();
+		GRender->GetGeneralViewport()->ClearColor(BearCore::BearColor::Black);
+		GCallBack->Update(time);
+		GRender->GetGeneralViewport()->Swap();
+		GConsole->CallStack();
 	}
 }
 
@@ -55,6 +57,7 @@ void BearEngine::BearEngine::Create(const bchar * name)
 #define REGISTER_NAME(name,text) N##name=BearName(text);
 #include "BearCore/BearNames.h"
 	}
+
 	GSystemConfig = BearCore::bear_new<BearCore::BearINI>();
 	BearCore::FS->ReadConfig(TEXT("%config%"), TEXT("system.ltx"), *GSystemConfig, BearCore::BearEncoding::UTF8, &GIncluder);
 	GGameConfig = BearCore::bear_new<BearCore::BearINI>();
@@ -72,10 +75,13 @@ void BearEngine::BearEngine::Create(const bchar * name)
 	GObjectManager = BearCore::bear_alloc<BearObjectManager>(1);
 	new(GObjectManager)BearObjectManager();
 
+	GCallBack = GObjectManager->Create<BearCallBack>(TEXT("BearEngine::BearCallBack"));
+
 }
 
 void BearEngine::BearEngine::Close()
 {
+	GCallBack->Destroy();
 	BearCore::bear_delete(GSystemConfig);
 	BearCore::bear_delete(GGameConfig);
 	BearCore::bear_delete(GPlatformConfig);
@@ -89,6 +95,7 @@ void BearEngine::BearEngine::Close()
 	BearCore::bear_free(GObjectManager);
 }
 extern bool GRemakeShaders ;
+void RegisterConsoleCommand();
 void BearEngine::BearEngine::Initialize(bchar** ArgV, int32 ArgC)
 {
 	for (int32 i = 0; i < ArgC; i++)
@@ -98,16 +105,32 @@ void BearEngine::BearEngine::Initialize(bchar** ArgV, int32 ArgC)
 			GRemakeShaders = true;
 		}
 	}
-	BEAR_OBJECT_VALUE(GGeneralViewport);
-	BearGraphics::BearRenderInterface::AttachRenderTargetView(0, *GGeneralViewport);
+	GRender->CreateGeneralViewport();
 	BEAR_OBJECT_VALUE(G2DPlane);
+	GCallBack->GetDestroy().add(G2DPlane, BEAR_CALLBACK_END - 1);
+
 	BEAR_OBJECT_VALUE(GInput);
+	GCallBack->GetDestroy().add(GInput, BEAR_CALLBACK_END - 1);
+
 	BEAR_OBJECT_VALUE(GLevel);
+	GCallBack->GetDestroy().add(GLevel, BEAR_CALLBACK_END - 2);
+	GCallBack->GetUpdate().add(GLevel, 0);
+
 	BEAR_OBJECT_VALUE(GGameController);
+	GCallBack->GetDestroy().add(GGameController, BEAR_CALLBACK_END - 3);
+	GCallBack->GetUpdate().add(GGameController, -1);
+
+
 	BearCore::BearString Level;
+
 	BEAR_OBJECT_VALUE(Level);
+
 	GLevel->Load(*Level);
+
 	GConsole = GObjectManager->Create<BearConsole>(TEXT("BearEngine::BearConsole"));
+	GCallBack->GetDestroy().add(GConsole, BEAR_CALLBACK_END - 4);
+	GCallBack->GetUpdate().add(GConsole, BEAR_CALLBACK_END);
+	RegisterConsoleCommand();
 }
 
 void BearEngine::BearEngine::Destroy()
@@ -131,24 +154,14 @@ void BearEngine::BearEngine::Load(const BearCore::BearInputStream * stream)
 BearEngine::BearEngine::BearEngine(const BearName&type) :BearObject(type, BO_OnlyOne)
 {
 	BEAR_OBJECT_VALUE(GRender);
+	GCallBack->GetDestroy().add(GRender, BEAR_CALLBACK_END + 1);
 	BEAR_OBJECT_VALUE(GResourceManager);
+	GCallBack->GetDestroy().add(GResourceManager, BEAR_CALLBACK_END + 1);
 	
 }
 
 BearEngine::BearEngine::~BearEngine()
 {
 	BearCore::BearLog::Printf(TEXT("BearEngine Destroy"));
-	if (GLevel)GLevel->Destroy();
-	if (GConsole)GConsole->Destroy();
-	if (GGameController)GGameController->Destroy();
-	GResourceManager->Destroy();
-	if(GGeneralViewport)
-	GGeneralViewport->Destroy();
-	if (G2DPlane)
-		G2DPlane->Destroy();
-	if (GInput)GInput->Destroy();
-
-	GRender->Destroy();
-
-
+	GCallBack->ObjectsDestroy();
 }

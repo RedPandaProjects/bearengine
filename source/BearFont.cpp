@@ -45,7 +45,7 @@ void BearEngine::BearFont::Compile(const bchar * name)
 {
 	BearCore::BearINI ini;
 	BearCore::FS->ReadConfig(TEXT("%import%"), name, TEXT(".ltx"), ini, BearCore::BearEncoding::UTF8);
-	BearCore::BearLog::Printf(TEXT("Import Font [%s]"), name);
+	BearCore::BearLog::Printf(TEXT("Compile Font [%s]"), name);
 	BearCore::FS->CreatePath(TEXT("%fonts%"),0);
 	auto font_file = BearCore::FS->Write(TEXT("%fonts%"), name, TEXT(".bfi"), 0);
 	
@@ -90,8 +90,11 @@ void BearEngine::BearFont::Compile(const bchar * name)
 	texture.Create(size_texture, size_texture, false, 1, BearGraphics::TPF_R8);
 	texture.Fill(BearCore::BearColor::Transparent);
 	font_file->WriteUint32(version);
-	font_file->WriteUint32(size);
+;
+	font_file->WriteUint32(static_cast<uint32>(face->size->metrics.height) / static_cast<uint32>(1 << 6));
 	font_file->WriteUint32(static_cast<uint32>(chars_size));
+
+	BearCore::BearLog::Printf(TEXT("Char size [%d]"), static_cast<uint32>(chars_size));
 	for (bsize i = 0; i < chars_size; i++) {
 
 		bchar16 id = chars[i];
@@ -138,9 +141,10 @@ void BearEngine::BearFont::Compile(const bchar * name)
 		x_t += width_char;
 		float advance = static_cast<float>(face->glyph->metrics.horiAdvance) / static_cast<float>(1 << 6);
 		float pos_x = static_cast<float>(face->glyph->metrics.horiBearingX) / static_cast<float>(1 << 6);
-		float pos_y = static_cast<float>(size) - ((static_cast<float>(face->glyph->metrics.horiBearingY) / static_cast<float>(1 << 6)));
-		font_file->WriteFloat(static_cast<float>(width_char));
-		font_file->WriteFloat(static_cast<float>(height_char));
+		float pos_y = static_cast<float>(size) - ((static_cast<float>(face->glyph->metrics.horiBearingY) / static_cast<float>(1 << 6))) -1;
+		BEAR_ASSERT(pos_y >= 0);
+		font_file->WriteFloat((static_cast<float>(face->glyph->metrics.width) / static_cast<float>(1 << 6)));
+		font_file->WriteFloat((static_cast<float>(face->glyph->metrics.height) / static_cast<float>(1 << 6)));
 		font_file->WriteFloat(x / static_cast<float>(size_texture));
 		font_file->WriteFloat(y / static_cast<float>(size_texture));
 		font_file->WriteFloat(width_char / static_cast<float>(size_texture));
@@ -149,6 +153,8 @@ void BearEngine::BearFont::Compile(const bchar * name)
 		font_file->WriteFloat(pos_x);
 		font_file->WriteFloat(pos_y);
 	}
+
+	BearCore::BearLog::Printf(TEXT("Max y [%d]"), static_cast<uint32>(max_y));
 	font_file->WriteUint32(max_y);
 	BearCore::BearStringPath out_path;
 	BearCore::FS->UpdatePath(TEXT("%fonts%"), 0, out_path);
@@ -161,6 +167,7 @@ void BearEngine::BearFont::Compile(const bchar * name)
 	BEAR_ASSERT(texture.SaveToDds(out_path));
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
+	BearCore::BearLog::Printf(TEXT("Compile font end"));
 }
 #endif
 void BearEngine::BearFont::clear()

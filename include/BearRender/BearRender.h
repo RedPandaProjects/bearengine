@@ -3,15 +3,38 @@ namespace BearEngine
 {
 	class BEARENGINE_API BearRender :public BearObject
 	{
+		friend BearEngine;
 		BEAR_OBJECT(BearRender);
 		BearRender(const BearName&type);
 		~BearRender();
+		void CreateGeneralViewport();
 	public:
+		inline const BearViewport*GetGeneralViewport()const
+		{
+			return GeneralViewport;
+		}
+		inline  BearViewport*GetGeneralViewport()
+		{
+			return GeneralViewport;
+		}
 		enum TypeMatrix
 		{
 			TM_Othro,
 			TM_View,
 		};
+	
+		void Resize(bsize width, bsize height);
+		void Resize(float width, float height);
+		void SetFullScreen(bool);
+		inline  BearCore::BearVector2<bsize> GetSize()const
+		{
+			return  BearCore::BearVector2<bsize>(Width,Height);
+		}
+		inline  BearCore::BearVector2<float> GetSizeFloat()const
+		{
+			return  BearCore::BearVector2<float>(static_cast<float>(Width),static_cast<float>( Height));
+		}
+
 		virtual void Destroy() override;
 		void SetShader(BearShader&shader);
 		void SetVertex(bsize slot,BearSampler&sampler);
@@ -58,7 +81,10 @@ namespace BearEngine
 		uint64 m_vertex_state_current;
 		BearCore::BearMap < uint64, BearGraphics::BearVertexStateRef> m_vertex_state_map;
 
-
+		bsize Width ;
+		bsize	Height ;
+		bool	FullScreen ;
+		BearViewport*GeneralViewport;
 
 	};
 	BEARENGINE_API extern BearRender*GRender;

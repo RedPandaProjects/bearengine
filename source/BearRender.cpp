@@ -1,7 +1,7 @@
 #include "BearEngine.hpp"
 BEARENGINE_API BearEngine::BearRender*BearEngine::GRender=0;
 
-BearEngine::BearRender::BearRender(const BearName&type):BearObject(type,BO_OnlyOne),m_blend_current(0xFFFF), m_vertex_state_current(0xFFFFFFFFFFFFFFFF)
+BearEngine::BearRender::BearRender(const BearName&type):BearObject(type,BO_OnlyOne),m_blend_current(0xFFFF), m_vertex_state_current(0xFFFFFFFFFFFFFFFF),GeneralViewport(0)
 {
 	BEAR_OBJECT_VALUE(Render);
 	BearCore::BearLog::Printf(TEXT("Loading render [%s]"), *Render);
@@ -23,12 +23,17 @@ BearEngine::BearRender::BearRender(const BearName&type):BearObject(type,BO_OnlyO
 
 	SetView(0, 0, 500, 500);
 
+	BEAR_OBJECT_VALUE_FROM_USER(Width);
+	BEAR_OBJECT_VALUE_FROM_USER(Height);
+	BEAR_OBJECT_VALUE_FROM_USER(FullScreen);
 
-
+	/*Resize(Width, Height);
+	SetFullScreen(FullScreen);*/
 }
 
 BearEngine::BearRender::~BearRender()
 {
+	GeneralViewport->Destroy();
 	m_vertex_state_map.clear();
 	m_blend_default.Clear();
 	m_sampler_map.clear();
@@ -37,6 +42,44 @@ BearEngine::BearRender::~BearRender()
 	m_sconst_matrix.Clear();
 	BearGraphics::BearRenderInterface::Destroy();
 }
+
+void BearEngine::BearRender::CreateGeneralViewport()
+{	BearGraphics::BearRenderInterface::SetViewport(0, 0, 0, GetSizeFloat().x, GetSizeFloat().y);
+	BEAR_OBJECT_VALUE(GeneralViewport);
+	BearGraphics::BearRenderInterface::AttachRenderTargetView(0, *GeneralViewport);
+	GCallBack->GetResize().add(GeneralViewport, 0);
+	GRender->SetView(0, 0, static_cast<float>(Width), static_cast<float>(Height));
+	Resize(Width, Height);
+	SetFullScreen(FullScreen);
+}
+
+void BearEngine::BearRender::Resize(bsize widht, bsize height)
+{
+	if (widht == GeneralViewport->GetSize().x &&
+		height == GeneralViewport->GetSize().y)return ;
+	Width = widht;
+	Height = height;
+	BEAR_OBJECT_VALUE_TO_USER(Width);
+	BEAR_OBJECT_VALUE_TO_USER(Height);
+	GCallBack->CallBackResize(widht, height);
+	BearGraphics::BearRenderInterface::SetViewport(0, 0, 0, GetSizeFloat().x, GetSizeFloat().y);
+	BearGraphics::BearRenderInterface::AttachRenderTargetView(0,*GeneralViewport);
+}
+
+void BearEngine::BearRender::Resize(float widht, float height)
+{
+	Resize(static_cast<bsize>(widht), static_cast<bsize>(height));
+}
+
+void BearEngine::BearRender::SetFullScreen(bool full_screen)
+{
+
+	if (full_screen== GeneralViewport->IsFullScreen())return;
+	FullScreen = full_screen;
+	BEAR_OBJECT_VALUE_TO_USER(FullScreen);
+	GeneralViewport->SetFullScreen(full_screen);
+}
+
 
 void BearEngine::BearRender::Destroy()
 {
@@ -141,7 +184,7 @@ void BearEngine::BearRender::SetVertex(bsize slot, TypeMatrix type)
 	switch (type)
 	{
 	case BearRender::TM_Othro:
-		BearGraphics::BearRenderInterface::SetVertexShaderConstants(slot,GGeneralViewport->m_sconst_othro);
+		BearGraphics::BearRenderInterface::SetVertexShaderConstants(slot, GeneralViewport->m_sconst_othro);
 		break;
 	case BearRender::TM_View:
 		BearGraphics::BearRenderInterface::SetVertexShaderConstants(slot, m_sconst_view);
@@ -157,7 +200,7 @@ void BearEngine::BearRender::SetPixel(bsize slot, TypeMatrix type)
 	switch (type)
 	{
 	case BearRender::TM_Othro:
-		BearGraphics::BearRenderInterface::SetPixelShaderConstants(slot, GGeneralViewport->m_sconst_othro);
+		BearGraphics::BearRenderInterface::SetPixelShaderConstants(slot, GeneralViewport->m_sconst_othro);
 		break;
 	case BearRender::TM_View:
 		BearGraphics::BearRenderInterface::SetPixelShaderConstants(slot, m_sconst_view);
@@ -194,10 +237,9 @@ void BearEngine::BearRender::SetView(const BearCore::BearVector4<float>& view)
 }
 
 
-
-
 void BearEngine::BearRender::Update(float time)
 {
+	
 }
 
 void BearEngine::BearRender::Save(BearCore::BearOutputStream * stream)
@@ -427,7 +469,7 @@ void BearEngine::BearRender::CreateVertexState(BearShader & shader)
 		initializer.Elements[i].SemanticIndex = i;
 		initializer.Elements[i].Type = ConvertVertexFormat(shader.m_vertex_state[i]);
 		initializer.Elements[i].Offset = offset;
-		offset += GetSize(shader.m_vertex_state[i]);
+		offset += ::GetSize(shader.m_vertex_state[i]);
 	}
 
 	BearCore::BearMemoryStream vertexBuffer(**BearCore::FS->Read(TEXT("%app_shaders_cur%"), *shader.m_pixel->get_name().to_string(), TEXT(".vs.bin")));

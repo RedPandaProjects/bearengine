@@ -9,6 +9,7 @@ namespace BearEngine
 	public:
 		BearCore::BearVector2<float> Position;
 		BearCore::BearString Text;
+		BearCore::BearString TextIn;
 		float MaxWidth;
 		void SetFont(const BearName&name);
 		virtual void Destroy();

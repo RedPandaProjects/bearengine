@@ -144,14 +144,14 @@ BearCore::BearFVector2 BearEngine::BearInput::GetMousePosition()
 {
 	POINT P;
 	GetCursorPos(&P);
-	ScreenToClient(GGeneralViewport->GetWindowHandle(), &P);
+	ScreenToClient(GRender->GetGeneralViewport()->GetWindowHandle(), &P);
 	return BearCore::BearFVector2(static_cast<float>(P.x), static_cast<float>(P.y));
 }
 
 void BearEngine::BearInput::SetMousePosition(const BearCore::BearFVector2 & position)
 {
 	POINT point = { static_cast<LONG>(position.x),  static_cast<LONG>(position.y) };
-	ClientToScreen(GGeneralViewport->GetWindowHandle(), &point);
+	ClientToScreen(GRender->GetGeneralViewport()->GetWindowHandle(), &point);
 	SetCursorPos(point.x, point.y);
 }
 

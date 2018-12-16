@@ -98,4 +98,22 @@ namespace BearEngine
 		BearName m_type;
 		BearCore::BearFlags<uint32> m_flags;
 	};
+	class BEARENGINE_API BearObjectResize
+	{
+	public:
+		virtual void Resize(bsize widht, bsize height)=0;
+
+	};
+	class BEARENGINE_API BearObjectAppActive
+	{
+	public:
+		virtual void AppActive()=0;
+
+	};
+	class BEARENGINE_API BearObjectAppDeactive
+	{
+	public:
+		virtual void AppDeactive()=0;
+
+	};
 }

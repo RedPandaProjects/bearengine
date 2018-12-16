@@ -14,10 +14,14 @@
 #include "BearCore/BearName.h"
 #include "BearCore/BearObject.h"
 
+
+
 #include "BearCore/BearObjectManager.h"
 
 #include "BearCore/BearConfig.h"
 #include "BearCore/BearIncluder.h"
+
+#include "BearCore/BearCallBack.h"
 
 #include "BearCore/BearEngine.h"
 #include "BearCore/BearEditor.h"
@@ -48,4 +52,7 @@
 #include "BearLevel/BearLevel.h"
 
 #include "BearCore/BearGameController.h"
+
+#include "BearCore/BearConsoleCommand.h"
 #include "BearCore/BearConsole.h"
+

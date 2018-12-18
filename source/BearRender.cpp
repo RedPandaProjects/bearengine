@@ -33,6 +33,7 @@ BearEngine::BearRender::BearRender(const BearName&type):BearObject(type,BO_OnlyO
 
 BearEngine::BearRender::~BearRender()
 {
+	if(GeneralViewport)
 	GeneralViewport->Destroy();
 	m_vertex_state_map.clear();
 	m_blend_default.Clear();
@@ -236,6 +237,14 @@ void BearEngine::BearRender::SetView(const BearCore::BearVector4<float>& view)
 	m_sconst_view.Unlock();
 }
 
+
+void BearEngine::BearRender::ClearStats()
+{
+	m_vertex_state_map.clear_not_free();
+	m_vertex_state_current = 0xFFFFFFFFFFFFFFFF;
+	m_blend_map.clear();
+	m_blend_current = 0xFFFF;
+}
 
 void BearEngine::BearRender::Update(float time)
 {

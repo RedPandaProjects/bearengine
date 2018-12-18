@@ -12,8 +12,8 @@ namespace BearEngine
 		BearResourceManager(const BearName&type);
 		~BearResourceManager();
 	public:
-		void CompilePixelShader(const BearName&name);
-		void CompileVertexShader(const BearName&name);
+		void CompilePixelShader(const BearName&name, bool recompile = true);
+		void CompileVertexShader(const BearName&name, bool recompile = true);
 
 		virtual BearAnimateArray2DRef* GetAnimateArray2D(const BearName&name);
 		virtual void Destroy(BearAnimateArray2DRef*&anim);
@@ -29,10 +29,17 @@ namespace BearEngine
 
 		virtual BearVertexShaderRef* GetVertexShader(const BearName&name);
 		virtual void Destroy(BearVertexShaderRef*&shader);
-
+#ifdef EDITOR
+		virtual void RecompileShaders();
+		virtual void ReloadTextures();
+#endif
 		virtual void Destroy();
 
 	private:
+		void LoadTexture( BearGraphics::BearTexture2DRef&ref, const bchar*name);
+		void LoadShaderVertex(BearGraphics::BearVertexShaderRef&ref, const bchar*name,bool recompile=false);
+		void LoadShaderPixel(BearGraphics::BearPixelShaderRef&ref, const bchar*name, bool recompile = false);
+
 		virtual void Update(float time) override;
 		virtual void Save(BearCore::BearOutputStream*stream) override;
 		virtual void Load(const BearCore::BearInputStream*stream) override;

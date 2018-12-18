@@ -54,7 +54,9 @@ namespace BearEngine
 		{
 			return m_rect_view;
 		}
-
+#ifdef EDITOR
+		void ClearStats();
+#endif
 	private:
 		virtual void Update(float time) override;
 		virtual void Save(BearCore::BearOutputStream*stream) override;

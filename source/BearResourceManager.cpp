@@ -16,10 +16,10 @@ BearEngine::BearResourceManager::~BearResourceManager()
 	MapVertexShaders.clear();
 }
 
-void BearEngine::BearResourceManager::CompilePixelShader(const BearName&name_)
+void BearEngine::BearResourceManager::CompilePixelShader(const BearName&name_, bool recompile )
 {
 	const bchar*name = *name_.to_string();
-	if (!BearCore::FS->ExistFile(TEXT("%app_shaders_cur%"), name, TEXT(".ps.bin"))|| GRemakeShaders)
+	if (!BearCore::FS->ExistFile(TEXT("%app_shaders_cur%"), name, TEXT(".ps.bin"))|| GRemakeShaders|| recompile)
 	{
 		BearCore::BearLog::Printf(TEXT("Compile pixel [%s]"), name);
 		BearGraphics::BearShaderPixelCompilerRef compile;
@@ -35,10 +35,10 @@ void BearEngine::BearResourceManager::CompilePixelShader(const BearName&name_)
 	}
 }
 
-void BearEngine::BearResourceManager::CompileVertexShader(const BearName&name_)
+void BearEngine::BearResourceManager::CompileVertexShader(const BearName&name_, bool recompile)
 {
 	const bchar*name = *name_.to_string();
-	if (!BearCore::FS->ExistFile(TEXT("%app_shaders_cur%"), name, TEXT(".vs.bin"))|| GRemakeShaders)
+	if (!BearCore::FS->ExistFile(TEXT("%app_shaders_cur%"), name, TEXT(".vs.bin"))|| GRemakeShaders || recompile)
 	{
 		BearCore::BearLog::Printf(TEXT("Compile pixel [%s]"), name);
 		BearGraphics::BearShaderVertexCompilerRef compile;
@@ -122,23 +122,7 @@ BearEngine::BearTexture2DRef* BearEngine::BearResourceManager::GetTexture2D(cons
 	}
 	if (item->second.Empty())
 	{
-		BearCore::BearStringPath temp1, temp2;
-		temp1[0] = 0;
-		const bchar*name_str = *name.to_string();
-		;
-		if (BearCore::BearString::ReadTo(name_str, TEXT('_'), temp2)[0])
-		{
-			BearCore::BearString::Contact(temp1, temp2);
-			BearCore::BearString::Contact(temp1, BEAR_PATH);
-		}
-
-		BearCore::BearString::Contact(temp1, name_str);
-		BearCore::BearString::Contact(temp1, TEXT(".dds"));
-
-		BearGraphics::BearImage img;
-		BEAR_ASSERT(img.LoadDDSFromStream(**BearCore::FS->Read(TEXT("%textures%"), temp1)));
-		BearCore::BearLog::Printf(TEXT("Load texture [%s] %d kb"), *name.to_string(), int32(img.GetSizeInMemory() / 1024));
-		item->second.Create(img);
+		LoadTexture(item->second, *name.to_string());
 	}
 	auto resource = new(BearCore::bear_alloc<BearTexture2DRef>(1))BearTexture2DRef(name, item->second);
 	return resource;
@@ -167,9 +151,7 @@ BearEngine::BearPixelShaderRef * BearEngine::BearResourceManager::GetPixelShader
 	}
 	if (item->second.Empty())
 	{
-		CompilePixelShader(name);
-		BearCore::BearLog::Printf(TEXT("Load pixel shader [%s]"), *name.to_string());
-		item->second.LoadFromStream(**BearCore::FS->Read(TEXT("%app_shaders_cur%"), *name.to_string(), TEXT(".ps.bin")));
+		LoadShaderPixel(item->second, *name.to_string());
 	}
 	auto resource = new(BearCore::bear_alloc<BearPixelShaderRef>(1))BearPixelShaderRef(name, item->second);
 	return resource;
@@ -198,9 +180,7 @@ BearEngine::BearVertexShaderRef * BearEngine::BearResourceManager::GetVertexShad
 	}
 	if (item->second.Empty())
 	{
-		CompileVertexShader(name);
-		BearCore::BearLog::Printf(TEXT("Load pixel shader [%s]"), *name.to_string());
-		item->second.LoadFromStream(**BearCore::FS->Read(TEXT("%app_shaders_cur%"), *name.to_string(), TEXT(".vs.bin")));
+		LoadShaderVertex(item->second, *name.to_string());
 	}
 	auto resource = new(BearCore::bear_alloc<BearVertexShaderRef>(1))BearVertexShaderRef(name, item->second);
 	return resource;
@@ -219,9 +199,78 @@ void BearEngine::BearResourceManager::Destroy(BearVertexShaderRef *& texture)
 	BearCore::bear_free(texture);
 }
 
+void BearEngine::BearResourceManager::RecompileShaders()
+{
+	GRender->ClearStats();
+	{
+		auto begin = MapVertexShaders.begin();
+		auto end = MapVertexShaders.end();
+		while (begin != end)
+		{
+			LoadShaderVertex(begin->second, *begin->first.to_string(),true);
+			begin++;
+		}
+	}
+	{
+		auto begin = MapPixelShaders.begin();
+		auto end = MapPixelShaders.end();
+		while (begin != end)
+		{
+			LoadShaderPixel(begin->second, *begin->first.to_string() ,true);
+			begin++;
+		}
+	}
+}
+
+void BearEngine::BearResourceManager::ReloadTextures()
+{
+	auto begin=MapTextures.begin();
+	auto end = MapTextures.end();
+	while (begin != end)
+	{
+		LoadTexture(begin->second, *begin->first.to_string());
+		begin++;
+	}
+}
+
+
 void BearEngine::BearResourceManager::Destroy()
 {
 	BEAR_OBJECT_DESTROY(BearResourceManager);
+}
+
+void BearEngine::BearResourceManager::LoadTexture(BearGraphics::BearTexture2DRef & ref, const bchar * name_str)
+{
+	BearCore::BearStringPath temp1, temp2;
+	temp1[0] = 0;
+	;
+	if (BearCore::BearString::ReadTo(name_str, TEXT('_'), temp2)[0])
+	{
+		BearCore::BearString::Contact(temp1, temp2);
+		BearCore::BearString::Contact(temp1, BEAR_PATH);
+	}
+
+	BearCore::BearString::Contact(temp1, name_str);
+	BearCore::BearString::Contact(temp1, TEXT(".dds"));
+
+	BearGraphics::BearImage img;
+	BEAR_ASSERT(img.LoadDDSFromStream(**BearCore::FS->Read(TEXT("%textures%"), temp1)));
+	BearCore::BearLog::Printf(TEXT("Load texture [%s] %d kb"), name_str, int32(img.GetSizeInMemory() / 1024));
+	ref.Create(img);
+}
+
+void BearEngine::BearResourceManager::LoadShaderVertex(BearGraphics::BearVertexShaderRef & ref, const bchar * name, bool recompile)
+{
+	CompileVertexShader(name, recompile);
+	BearCore::BearLog::Printf(TEXT("Load vertex shader [%s]"), name);
+	ref.LoadFromStream(**BearCore::FS->Read(TEXT("%app_shaders_cur%"), name, TEXT(".vs.bin")));
+}
+
+void BearEngine::BearResourceManager::LoadShaderPixel(BearGraphics::BearPixelShaderRef & ref, const bchar * name, bool recompile)
+{
+	CompilePixelShader(name, recompile);
+	BearCore::BearLog::Printf(TEXT("Load pixel shader [%s]"), name);
+	ref.LoadFromStream(**BearCore::FS->Read(TEXT("%app_shaders_cur%"), name, TEXT(".ps.bin")));
 }
 
 void BearEngine::BearResourceManager::Update(float time)

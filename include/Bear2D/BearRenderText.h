@@ -10,10 +10,13 @@ namespace BearEngine
 		BearCore::BearVector2<float> Position;
 		BearCore::BearString Text;
 		BearCore::BearString TextIn;
+		BearCore::BearColor Color;
 		float MaxWidth;
 		void SetFont(const BearName&name);
 		virtual void Destroy();
 		virtual void Update(float time);
+		bsize GetCountLine(const bchar*text)const;
+		bsize GetSizeLine(const bchar*text)const;
 		inline void SetMatrix(BearRender::TypeMatrix matrix)
 		{
 			m_type_matrix = matrix;
@@ -30,6 +33,7 @@ namespace BearEngine
 		BearSampler m_sampler;
 		BearFontRef*m_font;
 		BearVertex m_vectex[4];
+		BearGraphics::BearShaderConstantsRef m_sconst_color;
 		BearRender::TypeMatrix m_type_matrix;
 	};
 }

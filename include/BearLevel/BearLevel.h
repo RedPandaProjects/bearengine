@@ -28,6 +28,7 @@ namespace BearEngine
 		BearCore::BearMap<BearCore::BearStringConteniar, bsize> MapTilesetsID;
 		BearCore::BearVector < BearCore::BearMemoryRef<BearLevelLayer>> Layers;
 		BearCore::BearMap<BearCore::BearStringConteniar, bsize> MapLayersID;
+		
 	public:
 		virtual void Destroy();
 		virtual void Update(float time) ;
@@ -37,6 +38,10 @@ namespace BearEngine
 		void SpawnObject(const BearName&Type, const BearName&Name, const BearCore::BearVector4<float>&Rect);
 		void Clear();
 		void Load(const bchar*name);
+		inline const 	BearCore::BearString&GetString()const
+		{
+			return m_name;
+		}
 #ifdef EDITOR
 		static void Compile(const bchar*name);
 #endif
@@ -89,7 +94,9 @@ namespace BearEngine
 			}
 			return end;
 		}
+		
 	private:
+		BearCore::BearString m_name;
 		BearTerrain*m_terrain;
 		void LoadLevel();
 		void LoadLayer();

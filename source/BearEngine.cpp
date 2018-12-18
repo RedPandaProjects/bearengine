@@ -1,5 +1,5 @@
 #include "BearEngine.hpp"
-
+bool GExit = false;
 BEARENGINE_API BearEngine::BearEngine*BearEngine::GEngine=0;
 extern BearCore::BearMap <BearCore::BearStringConteniar, bsize> *MapName;
 extern BearCore::BearMap <bsize, BearCore::BearString> *MapNameID;
@@ -13,7 +13,7 @@ void BearEngine::BearEngine::Loop()
 	if (!GRender->GetGeneralViewport())return;
 	BearCore::BearTimer timer;
 
-	while (GRender->GetGeneralViewport()->Update())
+	while (GRender->GetGeneralViewport()->Update()&&!GExit)
 	{
 		float time = timer.get_elapsed_time().asseconds();
 		timer.restart();
@@ -105,7 +105,15 @@ void BearEngine::BearEngine::Initialize(bchar** ArgV, int32 ArgC)
 			GRemakeShaders = true;
 		}
 	}
-	GRender->CreateGeneralViewport();
+	BEAR_OBJECT_VALUE(GConsole);
+
+	GCallBack->GetDestroy().add(GConsole, BEAR_CALLBACK_END - 4);
+	GCallBack->GetUpdate().add(GConsole, BEAR_CALLBACK_END);
+	GCallBack->GetResize().add(GConsole, 0);
+	RegisterConsoleCommand();
+
+	
+
 	BEAR_OBJECT_VALUE(G2DPlane);
 	GCallBack->GetDestroy().add(G2DPlane, BEAR_CALLBACK_END - 1);
 
@@ -127,10 +135,7 @@ void BearEngine::BearEngine::Initialize(bchar** ArgV, int32 ArgC)
 
 	GLevel->Load(*Level);
 
-	GConsole = GObjectManager->Create<BearConsole>(TEXT("BearEngine::BearConsole"));
-	GCallBack->GetDestroy().add(GConsole, BEAR_CALLBACK_END - 4);
-	GCallBack->GetUpdate().add(GConsole, BEAR_CALLBACK_END);
-	RegisterConsoleCommand();
+	GRender->CreateGeneralViewport();
 }
 
 void BearEngine::BearEngine::Destroy()

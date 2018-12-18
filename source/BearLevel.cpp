@@ -350,6 +350,7 @@ void BearEngine::BearLevel::Clear()
 }
 void BearEngine::BearLevel::Load(const bchar * name)
 {
+	Clear();
 	BearCore::FS->SubPath(TEXT("%level%"));
 	BearCore::FS->AppendPath(TEXT("%level%"), name, TEXT("%levels%"), 0);
 	BearCore::BearLog::Printf(TEXT("Level set [%s]"), name);
@@ -358,6 +359,7 @@ void BearEngine::BearLevel::Load(const bchar * name)
 	LoadCollision();
 	LoadSpawn();
 	EndLoad();
+	m_name = name;
 }
 void BearEngine::BearLevel::LoadLevel()
 {

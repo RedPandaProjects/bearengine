@@ -5,7 +5,7 @@ public class bear_engine :Project
 {
 	public bear_engine(string ProjectPath)
 	{
-		PCHFile=Path.Combine(ProjectPath,"source","PCH.cpp");
+		PCHFile=Path.Combine(ProjectPath,"source","BearEngine.PCH.cpp");
 		PCHIncludeFile = "BearEngine.hpp";
 		AddSourceFiles(Path.Combine(ProjectPath,"source"));
         Include.Private.Add(Path.Combine(ProjectPath, "include"));
